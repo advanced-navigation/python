@@ -41,7 +41,7 @@ from enum import Enum
 from struct import pack, unpack
 from dataclasses import dataclass, field
 from ctypes.wintypes import DOUBLE
-from spatial_sdk.an_packet_protocol import AN_Packet
+from an_packet_protocol import AN_Packet
 
 MAXIMUM_PACKET_PERIODS = 50
 MAXIMUM_DETAILED_SATELLITES = 32

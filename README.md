@@ -4,7 +4,7 @@ Python Language SDK Version 0.02
 
 Setup:
 - This SDK requires Python3.8 and above.
-- Add spatial_sdk to the Python path.
+- Add python to the Python path.
 - Example files have been made using:
 	- PySerial 3.4
 		- Users will need to install 3.4 and add to Python path.

@@ -35,8 +35,8 @@ import datetime
 import sys
 import math
 
-from spatial_sdk.spatial_packets import SensorRangesPacket, AccelerometerRange, GyroscopeRange, MagnetometerRange, SystemStatePacket, RawSensorsPacket, PacketID
-from spatial_sdk.an_packet_protocol import AN_Decoder, AN_Packet, an_packet_decode
+from spatial_packets import SensorRangesPacket, AccelerometerRange, GyroscopeRange, MagnetometerRange, SystemStatePacket, RawSensorsPacket, PacketID
+from an_packet_protocol import AN_Decoder, AN_Packet, an_packet_decode
 import serial
 import serial.serialutil as serialutil
 
