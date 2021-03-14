@@ -57,8 +57,8 @@ def set_sensor_ranges():
 if __name__ == '__main__':
     # Checks enough arguments in command for serial communications. Otherwise prompts user on use.
     if (len(sys.argv) != 3):
-        print(f"Usage - program com_port baud_rate\nExample - packet_example.exe COM1 115200")
-        exit()        
+        print(f"Usage - program com_port baud_rate\nExample - packet_example.py COM1 115200")
+        exit()
     comport = str(sys.argv[1])
     baudrate = sys.argv[2]
 
