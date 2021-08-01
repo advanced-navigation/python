@@ -644,19 +644,41 @@ class RawSensorsPacket():
             else:
                 return 1
 
+class RawSensorStatusAdu():
+    @dataclass()
+    class RawSensorStatus:
+        absolute_pressure_valid: bool = False
+        differential_pressure_valie: bool = False
+        absolute_pressure_sensor_overrange: bool = False
+        differential_pressure_sensor_overrange: bool = False
+        absolute_pressure_sensor_failure: bool = False
+        differential_pressure_sensor_failure: bool = False
+        temperature_sensor_valid: bool = False
+        temperature_sensor_failure: bool = False
+
+        def unpack(self, data):
+            self.absolute_pressure_valid                = ((data & 0b00000001) == 0b00000001)
+            self.differential_pressure_valid            = ((data & 0b00000010) == 0b00000010)
+            self.absolute_pressure_sensor_overrange     = ((data & 0b00000100) == 0b00000100)
+            self.differential_pressure_sensor_overrange = ((data & 0b00001000) == 0b00001000)
+            self.absolute_pressure_sensor_failure       = ((data & 0b00010000) == 0b00010000)
+            self.differential_pressure_sensor_failure   = ((data & 0b00100000) == 0b00100000)
+            self.temperature_sensor_valid               = ((data & 0b01000000) == 0b01000000)
+            self.temperature_sensor_failure             = ((data & 0b10000000) == 0b10000000)
+
 class RawSensorsPacketAdu():
     @dataclass()
     class RawSensorsPacket:
         absolute_pressure: float = 0
         differential_pressure: float = 0
-        raw_sensors_status: int = 0
+        raw_sensors_status: RawSensorStatusAdu.RawSensorStatus = RawSensorStatusAdu.RawSensorStatus()
         temperature: float = 0
 
         def decode(self, an_packet: AN_Packet):
             if((an_packet.id == PacketID.PacketID.raw_sensors.value) and (len(an_packet.data) == 13)):
                 self.absolute_pressure = unpack('<f', bytes(an_packet.data[0:4]))[0]
                 self.differential_pressure = unpack('<f', bytes(an_packet.data[4:8]))[0]
-                self.raw_sensors_status = unpack('<B', bytes(an_packet.data[8]))[0]
+                self.raw_sensors_status.unpack(an_packet.data[8])
                 self.temperature = unpack('<f', bytes(an_packet.data[9:13]))[0]
                 return 0
             else:
