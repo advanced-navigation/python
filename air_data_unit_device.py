@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from anpp_packets.air_data_unit_packets import AirDataUnitPackets
+from anpp_packets.devices.air_data_unit_packets import AirDataUnitPackets
 from advanced_navigation_device import AdvancedNavigationDevice
 
 """ Air Data Unit object with high level functions for setting and receiving values """
