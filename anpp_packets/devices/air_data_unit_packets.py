@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from anpp_packets.anpp_packets import *
+from anpp_packets.packets.anpp_packets import *
 
 """ ANPP Packets for Air Data Unit as defined in Air Data Unit Reference Manual """
 class AirDataUnitPackets(PacketID,

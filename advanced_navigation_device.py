@@ -35,9 +35,9 @@ from enum import Enum
 from struct import pack, unpack
 from dataclasses import dataclass, field
 from ctypes.wintypes import DOUBLE
-from anpp_packets.an_packet_protocol import AN_Decoder
+from anpp_packets.packets.an_packet_protocol import AN_Decoder
 from abc import ABC, abstractmethod
-from anpp_packets.anpp_packets import ResetVerification, OdometerFlags, ExternalAirDataPacketFlags, PacketPeriod, GPIOOutputRate
+from anpp_packets.packets.anpp_packets import ResetVerification, OdometerFlags, ExternalAirDataPacketFlags, PacketPeriod, GPIOOutputRate
 
 valid_baud_rates = [2400, 4800, 9600, 19200, 38400, 57600,
                     115200, 230400, 250000, 460800, 500000,

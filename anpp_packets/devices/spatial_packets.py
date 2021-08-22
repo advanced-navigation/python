@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from anpp_packets.anpp_packets import *
+from anpp_packets.packets.anpp_packets import *
 
 """ ANPP Packets for Spatial as defined in Spatial Reference Manual """
 class SpatialPackets(PacketID,
