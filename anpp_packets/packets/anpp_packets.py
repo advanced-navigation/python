@@ -145,34 +145,6 @@ class PacketID():
 
 
 ########## System Packets ##########
-class AcknowledgeResult():
-    class AcknowledgeResult(Enum):
-        success = 0
-        failure_crc = 1
-        failure_length = 2
-        failure_range = 3
-        failure_flash = 4
-        failure_not_ready = 5
-        failure_unknown_packet = 6
-
-
-class AcknowledgePacket():
-    @dataclass()
-    class AcknowledgePacket:
-        packet_id: PacketID.PacketID = 0
-        packet_crc: int = 0
-        acknowledge_result: AcknowledgeResult = 0
-
-        def decode(self, an_packet: AN_Packet):
-            if((an_packet.id == PacketID.PacketID.acknowledge.value) and (len(an_packet.data) == 4)):
-                self.packet_id = an_packet.data[0]
-                self.packet_crc = unpack('<H', bytes(an_packet.data[1:3]))[0]
-                self.acknowledge_result = an_packet[3]
-                return 0
-            else:
-                return 1
-
-
 class RequestPacket():
     @dataclass()
     class RequestPacket:

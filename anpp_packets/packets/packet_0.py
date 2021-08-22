@@ -1,7 +1,7 @@
 ################################################################################
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
-##                           air_data_unit_packets.py                         ##
+##                                 packet_0.py                                ##
 ##                     Copyright 2021, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
@@ -27,20 +27,37 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from anpp_packets.packets.anpp_packets import *
-from anpp_packets.packets.packet_0 import AcknowledgePacket, AcknowledgeResult
+""" Acknowledge Packet 0, as defined in Advance Navigation Reference Manuals """
 
-""" ANPP Packets for Air Data Unit as defined in Air Data Unit Reference Manual """
-class AirDataUnitPackets(PacketID,
-                         AcknowledgeResult,
-                         AcknowledgePacket,
-                         RequestPacket,
-                         BootMode,
-                         BootModePacket,
-                         DeviceInformationPacket,
-                         ResetVerification,
-                         ResetPacket,
-                         RawSensorStatusAdu,
-                         RawSensorsPacketAdu,
-                         AirDataPacket):
-    pass
+from enum import Enum
+from struct import unpack
+from dataclasses import dataclass
+from anpp_packets.packets.an_packet_protocol import AN_Packet
+from anpp_packets.packets.anpp_packets import PacketID
+
+class AcknowledgeResult():
+    class AcknowledgeResult(Enum):
+        success = 0
+        failure_crc = 1
+        failure_length = 2
+        failure_range = 3
+        failure_flash = 4
+        failure_not_ready = 5
+        failure_unknown_packet = 6
+
+
+class AcknowledgePacket():
+    @dataclass()
+    class AcknowledgePacket:
+        packet_id: PacketID.PacketID = 0
+        packet_crc: int = 0
+        acknowledge_result: AcknowledgeResult.AcknowledgeResult = 0
+
+        def decode(self, an_packet: AN_Packet):
+            if((an_packet.id == PacketID.PacketID.acknowledge.value) and (len(an_packet.data) == 4)):
+                self.packet_id = an_packet.data[0]
+                self.packet_crc = unpack('<H', bytes(an_packet.data[1:3]))[0]
+                self.acknowledge_result = AcknowledgeResult.AcknowledgeResult(an_packet.data[3])
+                return 0
+            else:
+                return 1
