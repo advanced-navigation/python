@@ -30,7 +30,6 @@
 from anpp_packets.packets.an_packet_protocol import AN_Packet
 from anpp_packets.packets.packet_0 import AcknowledgePacket, AcknowledgeResult
 
-# Dummy Test for now
 def test_acknowledge_packet():
     packet = AcknowledgePacket.AcknowledgePacket()
     raw_packet = AN_Packet()
