@@ -28,6 +28,7 @@
 ################################################################################
 
 from anpp_packets.packets.anpp_packets import *
+from anpp_packets.packets.packet_0 import AcknowledgePacket, AcknowledgeResult
 
 """ ANPP Packets for Spatial as defined in Spatial Reference Manual """
 class SpatialPackets(PacketID,
