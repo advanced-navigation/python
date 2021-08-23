@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from anpp_packets.spatial_packets import SpatialPackets
+from anpp_packets.devices.spatial_packets import SpatialPackets
 from advanced_navigation_device import AdvancedNavigationDevice
 
 """ Spatial object with high level functions for setting and receiving values """

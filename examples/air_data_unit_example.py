@@ -34,7 +34,7 @@ import sys
 import math
 
 from air_data_unit_device import AirDataUnit
-from anpp_packets.an_packet_protocol import AN_Packet, an_packet_decode
+from anpp_packets.packets.an_packet_protocol import AN_Packet, an_packet_decode
 
 TRUE = 1
 FALSE = 0
