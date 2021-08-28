@@ -103,8 +103,11 @@ class AdvancedNavigationDevice(ABC):
         pass
 
     def get_device_and_configuration_information(self):
-        for packet in self.return_device_information_and_configuration_packets():
-            self.request_packet(packet)
+        packets = self.return_device_information_and_configuration_packets()
+        if(len(packets)!=0):
+            self.request_packet(packets)
+        else:
+            print("Warning: No Device or Configuration packets defined.")
 
     # System Packets
     def request_packet(self, packet_id):

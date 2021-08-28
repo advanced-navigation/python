@@ -1,7 +1,7 @@
 ################################################################################
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
-##                                 packet_1.py                                ##
+##                              packet_1_test.py                              ##
 ##                     Copyright 2021, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
@@ -27,26 +27,29 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-""" Acknowledge Packet 1, as defined in Advance Navigation Reference Manuals """
-
-from struct import pack
-from dataclasses import dataclass, field
 from anpp_packets.packets.an_packet_protocol import AN_Packet
-from anpp_packets.packets.anpp_packets import PacketID
+from anpp_packets.packets.packet_1 import RequestPacket
 
-class RequestPacket():
-    @dataclass()
-    class RequestPacket:
-        def encode(self, requested_packets):
-            data = bytes()
+def test_request_packet():
+    packet = RequestPacket.RequestPacket()
 
-            if(isinstance(requested_packets, int)):
-                requested_packets = [requested_packets]
+    # Test encode handles single interger
+    check = packet.encode(2)
+    assert check.id == 1
+    assert check.length == 1
+    assert check.header == b'\x8b\x01\x01\xb2\xc1'
+    assert check.data == b'\x02'
 
-            for packet in requested_packets:
-                data += pack('<B', packet)
+    # Test encode handles single list value
+    check = packet.encode([2])
+    assert check.id == 1
+    assert check.length == 1
+    assert check.header == b'\x8b\x01\x01\xb2\xc1'
+    assert check.data == b'\x02'
 
-            an_packet = AN_Packet()
-            an_packet.encode(PacketID.PacketID.request.value, len(data), data)
-
-            return an_packet
+    # Test encode handles multiple value list
+    check = packet.encode([2,3,182])
+    assert check.id == 1
+    assert check.length == 3
+    assert check.header == b'\x1a\x01\x03\xb20'
+    assert check.data == b'\x02\x03\xb6'
