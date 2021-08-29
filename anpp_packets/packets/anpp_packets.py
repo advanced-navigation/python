@@ -145,21 +145,6 @@ class PacketID():
 
 
 ########## System Packets ##########
-class RequestPacket():
-    @dataclass()
-    class RequestPacket:
-        packet_id: PacketID = 0
-
-        def encode(requested_packet_id: int):
-            print(f"Debug: RequestPacket.requested_packet_id = {requested_packet_id}")
-            data = pack('<B', requested_packet_id)
-
-            an_packet = AN_Packet()
-            an_packet.encode(PacketID.PacketID.request.value, 1, data)
-
-            return an_packet
-
-
 class BootMode():
     class BootMode(Enum):
         bootloader = 0

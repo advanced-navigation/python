@@ -1,7 +1,7 @@
 ################################################################################
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
-##                           air_data_unit_packets.py                         ##
+##                                 packet_1.py                                ##
 ##                     Copyright 2021, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
@@ -27,21 +27,27 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from anpp_packets.packets.anpp_packets import *
-from anpp_packets.packets.packet_0 import AcknowledgePacket, AcknowledgeResult
-from anpp_packets.packets.packet_1 import RequestPacket
+""" Acknowledge Packet 1, as defined in Advance Navigation Reference Manuals """
 
-""" ANPP Packets for Air Data Unit as defined in Air Data Unit Reference Manual """
-class AirDataUnitPackets(PacketID,
-                         AcknowledgeResult,
-                         AcknowledgePacket,
-                         RequestPacket,
-                         BootMode,
-                         BootModePacket,
-                         DeviceInformationPacket,
-                         ResetVerification,
-                         ResetPacket,
-                         RawSensorStatusAdu,
-                         RawSensorsPacketAdu,
-                         AirDataPacket):
-    pass
+from struct import pack
+from dataclasses import dataclass, field
+from anpp_packets.packets.an_packet_protocol import AN_Packet
+from anpp_packets.packets.anpp_packets import PacketID
+
+class RequestPacket():
+    @dataclass()
+    class RequestPacket:
+        def encode(self, requested_packets):
+            data = bytes()
+            print(f"requested_packets: {requested_packets}")
+
+            if(isinstance(requested_packets, int)):
+                requested_packets = [requested_packets]
+
+            for packet in requested_packets:
+                data += pack('<B', packet)
+
+            an_packet = AN_Packet()
+            an_packet.encode(PacketID.PacketID.request.value, len(data), data)
+
+            return an_packet
