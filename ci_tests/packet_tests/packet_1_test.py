@@ -1,7 +1,7 @@
 ################################################################################
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
-##                           air_data_unit_packets.py                         ##
+##                              packet_1_test.py                              ##
 ##                     Copyright 2021, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
@@ -27,21 +27,27 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from anpp_packets.packets.anpp_packets import *
-from anpp_packets.packets.packet_0 import AcknowledgePacket, AcknowledgeResult
+from anpp_packets.packets.an_packet_protocol import AN_Packet
 from anpp_packets.packets.packet_1 import RequestPacket
 
-""" ANPP Packets for Air Data Unit as defined in Air Data Unit Reference Manual """
-class AirDataUnitPackets(PacketID,
-                         AcknowledgeResult,
-                         AcknowledgePacket,
-                         RequestPacket,
-                         BootMode,
-                         BootModePacket,
-                         DeviceInformationPacket,
-                         ResetVerification,
-                         ResetPacket,
-                         RawSensorStatusAdu,
-                         RawSensorsPacketAdu,
-                         AirDataPacket):
-    pass
+def test_request_packet():
+    # Test encode handles single interger
+    check = RequestPacket.RequestPacket().encode(2)
+    assert check.id == 1
+    assert check.length == 1
+    assert check.header == b'\x8b\x01\x01\xb2\xc1'
+    assert check.data == b'\x02'
+
+    # Test encode handles single value list
+    check = RequestPacket.RequestPacket().encode([2])
+    assert check.id == 1
+    assert check.length == 1
+    assert check.header == b'\x8b\x01\x01\xb2\xc1'
+    assert check.data == b'\x02'
+
+    # Test encode handles multiple value list
+    check = RequestPacket.RequestPacket().encode([2,3,182])
+    assert check.id == 1
+    assert check.length == 3
+    assert check.header == b'\x1a\x01\x03\xb20'
+    assert check.data == b'\x02\x03\xb6'
