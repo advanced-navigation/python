@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 
 class IPDataportMode(Enum):
     """IP Dataport Mode"""
+
     none = 0
     tcp_server = 2
     tcp_client = 3
@@ -45,6 +46,7 @@ class IPDataportMode(Enum):
 @dataclass()
 class IPDataportConfiguration:
     """IP Dataport Configuration"""
+
     ip_address: int = 0
     port: int = 0
     mode: IPDataportMode = IPDataportMode.none
@@ -53,18 +55,21 @@ class IPDataportConfiguration:
 
     def unpack(self, data):
         """Unpack data bytes"""
-        self.ip_address = unpack('<I', data[0:4])[0]
-        self.port = unpack('<H', data[4:6])[0]
+        self.ip_address = unpack("<I", data[:4])[0]
+        self.port = unpack("<H", data[4:6])[0]
         self.mode = IPDataportMode(data[6])
 
     def pack(self):
-        return pack('<IHB', self.ip_address, self.port, self.mode.value)
+        return pack("<IHB", self.ip_address, self.port, self.mode.value)
 
 
 @dataclass()
 class IPDataportConfigurationPacket:
     """Packet 202 - IP Dataport Configuration Packet"""
-    ip_dataport_configuration: [IPDataportConfiguration] * 4 = field(default_factory=list)
+
+    ip_dataport_configuration: list[IPDataportConfiguration] = field(
+        default_factory=list
+    )
 
     ID = PacketID.ip_dataports_configuration
     LENGTH = 30
@@ -72,18 +77,20 @@ class IPDataportConfigurationPacket:
     def decode(self, an_packet: ANPacket):
         """Decode ANPacket to IP Dataport Configuration Packet
         Returns 0 on success and 1 on failure"""
-        if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            for i in range(4):
-                index = 2 + i * IPDataportConfiguration.LENGTH
-                self.ip_dataport_configuration[i].unpack(an_packet.data[index:index+IPDataportConfiguration.LENGTH])
-            return 0
-        else:
+        if an_packet.id != self.ID or len(an_packet.data) != self.LENGTH:
             return 1
+        for i in range(4):
+            index = 2 + i * IPDataportConfiguration.LENGTH
+            self.ip_dataport_configuration.append(IPDataportConfiguration())
+            self.ip_dataport_configuration[i].unpack(
+                an_packet.data[index : index + IPDataportConfiguration.LENGTH]
+            )
+        return 0
 
     def encode(self):
         """Encode IP Dataport Configuration Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<H', 0)
+        data = pack("<H", 0)
         for i in range(4):
             data += self.ip_dataport_configuration[i].pack()
 

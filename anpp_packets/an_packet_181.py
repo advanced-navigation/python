@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class PacketPeriod:
     """Packet Period"""
+
     packet_id: int = 0
     period: int = 0
 
@@ -44,15 +45,16 @@ class PacketPeriod:
     def unpack(self, data):
         """Unpack data bytes"""
         self.packet_id = data[0]
-        self.period = unpack('<I', data[1:4])[0]
+        self.period = unpack("<I", data[1:5])[0]
 
     def pack(self):
-        return pack('<BI', self.packet_id, self.period)
+        return pack("<BI", self.packet_id, self.period)
 
 
 @dataclass()
 class PacketsPeriodPacket:
     """Packet 181 - Packets Period Packet"""
+
     permanent: int = 0
     clear_existing_packets: int = 0
     packet_periods: [PacketPeriod] = field(default_factory=list)
@@ -64,22 +66,29 @@ class PacketsPeriodPacket:
     def decode(self, an_packet: ANPacket):
         """Decode ANPacket to Packets Period Packet
         Returns 0 on success and 1 on failure"""
-        if (an_packet.id == self.ID) and ((len(an_packet.data) - self.MINIMUM_LENGTH) % PacketPeriod.LENGTH == 0):
-            packet_periods_count = int((an_packet.length - self.MINIMUM_LENGTH) / PacketPeriod.LENGTH)
-            self.permanent = an_packet.data[0]
-            self.clear_existing_packets = an_packet.data[1]
-            for i in range(packet_periods_count):
-                index = 2 + i * PacketPeriod.LENGTH
-                self.packet_periods[i].unpack(an_packet.data[index:index+PacketPeriod.LENGTH])
-            return 0
-        else:
+        if (
+            an_packet.id != self.ID
+            or (len(an_packet.data) - self.MINIMUM_LENGTH) % PacketPeriod.LENGTH != 0
+        ):
             return 1
+        packet_periods_count = int(
+            (an_packet.length - self.MINIMUM_LENGTH) / PacketPeriod.LENGTH
+        )
+        self.permanent = an_packet.data[0]
+        self.clear_existing_packets = an_packet.data[1]
+        for i in range(packet_periods_count):
+            index = 2 + i * PacketPeriod.LENGTH
+            self.packet_periods.append(PacketPeriod())
+            self.packet_periods[i].unpack(
+                an_packet.data[index : index + PacketPeriod.LENGTH]
+            )
+        return 0
 
     def encode(self):
         """Encode Packets Period Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<B', self.permanent)
-        data += pack('<I', self.clear_existing_packets)
+        data = pack("<B", self.permanent)
+        data += pack("<I", self.clear_existing_packets)
         number_of_periods = int(len(self.packet_periods) / PacketPeriod.LENGTH)
         for i in range(number_of_periods):
             data += self.packet_periods[i].pack()
