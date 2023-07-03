@@ -27,11 +27,12 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from enum import Enum
+from enum import Enum, IntEnum
 
 
-class PacketID(Enum):
+class PacketID(IntEnum):
     """Advanced Navigation Packet Protocol IDs"""
+
     # System Packet IDs
     acknowledge = 0
     request = 1
