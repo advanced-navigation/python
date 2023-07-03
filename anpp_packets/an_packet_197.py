@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 
 class LBandMode(Enum):
     """L Band Mode"""
+
     disabled = 0
     omnistar_auto = 2
     omnistar_hp = 3
@@ -53,6 +54,8 @@ class LBandMode(Enum):
 
 class LBandSatelliteID(Enum):
     """L Band Satellite ID"""
+
+    unknown = 0
     iosat = 2
     aoret = 8
     rtxmx = 15
@@ -73,6 +76,7 @@ class LBandSatelliteID(Enum):
 @dataclass()
 class GNSSFrequencies:
     """GNSS Frequencies"""
+
     gps_l1ca: bool = False
     gps_l1c: bool = False
     gps_l1p: bool = False
@@ -141,43 +145,46 @@ class GNSSFrequencies:
         self.sbas_l1ca = (data & (1 << 31)) != 0
 
     def pack(self):
-        return (self.gps_l1ca << 0) \
-               & (self.gps_l1c << 1) \
-               & (self.gps_l1p << 2) \
-               & (self.gps_l2c << 3) \
-               & (self.gps_l2p << 4) \
-               & (self.gps_l2m << 5) \
-               & (self.gps_l5 << 6) \
-               & (self.glonass_g1ca << 7) \
-               & (self.glonass_g1p << 8) \
-               & (self.glonass_l1oc << 9) \
-               & (self.glonass_l1sc << 10) \
-               & (self.glonass_g2ca << 11) \
-               & (self.glonass_g2p << 12) \
-               & (self.glonass_l2oc << 13) \
-               & (self.glonass_l2sc << 14) \
-               & (self.glonass_l3oc << 15) \
-               & (self.glonass_l3sc << 16) \
-               & (self.beidou_b1 << 17) \
-               & (self.beidou_b2 << 18) \
-               & (self.beidou_b3 << 19) \
-               & (self.galileo_e1 << 20) \
-               & (self.galileo_e5a << 21) \
-               & (self.galileo_e5b << 22) \
-               & (self.galileo_e5ab << 23) \
-               & (self.galileo_e6 << 24) \
-               & (self.qzss_l1ca << 25) \
-               & (self.qzss_l1saif << 26) \
-               & (self.qzss_l1c << 27) \
-               & (self.qzss_l2c << 28) \
-               & (self.qzss_l5 << 29) \
-               & (self.qzss_lex << 30) \
-               & (self.sbas_l1ca << 31)
+        return (
+            (self.gps_l1ca << 0)
+            & (self.gps_l1c << 1)
+            & (self.gps_l1p << 2)
+            & (self.gps_l2c << 3)
+            & (self.gps_l2p << 4)
+            & (self.gps_l2m << 5)
+            & (self.gps_l5 << 6)
+            & (self.glonass_g1ca << 7)
+            & (self.glonass_g1p << 8)
+            & (self.glonass_l1oc << 9)
+            & (self.glonass_l1sc << 10)
+            & (self.glonass_g2ca << 11)
+            & (self.glonass_g2p << 12)
+            & (self.glonass_l2oc << 13)
+            & (self.glonass_l2sc << 14)
+            & (self.glonass_l3oc << 15)
+            & (self.glonass_l3sc << 16)
+            & (self.beidou_b1 << 17)
+            & (self.beidou_b2 << 18)
+            & (self.beidou_b3 << 19)
+            & (self.galileo_e1 << 20)
+            & (self.galileo_e5a << 21)
+            & (self.galileo_e5b << 22)
+            & (self.galileo_e5ab << 23)
+            & (self.galileo_e6 << 24)
+            & (self.qzss_l1ca << 25)
+            & (self.qzss_l1saif << 26)
+            & (self.qzss_l1c << 27)
+            & (self.qzss_l2c << 28)
+            & (self.qzss_l5 << 29)
+            & (self.qzss_lex << 30)
+            & (self.sbas_l1ca << 31)
+        )
 
 
 @dataclass()
 class GNSSConfigurationPacket:
     """Packet 197 - GNSS Configuration Packet"""
+
     permanent: int = 0
     gnss_frequencies: GNSSFrequencies = GNSSFrequencies()
     pdop: float = 0
@@ -200,29 +207,35 @@ class GNSSConfigurationPacket:
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
             self.permanent = an_packet.data[0]
-            self.gnss_frequencies.unpack(unpack('<Q', an_packet.data[1:9])[0])
-            self.pdop = unpack('<f', an_packet.data[9:13])[0]
-            self.tfop = unpack('<f', an_packet.data[13:17])[0]
+            self.gnss_frequencies.unpack(unpack("<Q", an_packet.data[1:9])[0])
+            self.pdop = unpack("<f", an_packet.data[9:13])[0]
+            self.tfop = unpack("<f", an_packet.data[13:17])[0]
             self.elevation_mask = an_packet.data[17]
             self.snr_mask = an_packet.data[18]
             self.sbas_corrections_enabled = an_packet.data[19]
             self.lband_mode = LBandMode(an_packet.data[20])
-            self.lband_frequency = unpack('<I', an_packet.data[21:25])[0]
-            self.lband_baud = unpack('<I', an_packet.data[25:29])[0]
-            self.primary_antenna_type = unpack('<I', an_packet.data[29:33])[0]
-            self.secondary_antenna_type = unpack('<I', an_packet.data[33:37])[0]
+            self.lband_frequency = unpack("<I", an_packet.data[21:25])[0]
+            self.lband_baud = unpack("<I", an_packet.data[25:29])[0]
+            self.primary_antenna_type = unpack("<I", an_packet.data[29:33])[0]
+            self.secondary_antenna_type = unpack("<I", an_packet.data[33:37])[0]
             self.lband_satellite_id = LBandSatelliteID(an_packet.data[37])
 
     def encode(self):
         """Encode GNSS Configuration Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<B', self.permanent)
-        data += pack('<Q', self.gnss_frequencies.pack())
-        data += pack('<ff', self.pdop, self.tfop)
-        data += pack('<BBBB', self.elevation_mask, self.snr_mask, self.sbas_corrections_enabled, self.lband_mode.value)
-        data += pack('<II', self.lband_frequency, self.lband_baud)
-        data += pack('<II', self.primary_antenna_type, self.secondary_antenna_type)
-        data += pack('B', self.lband_satellite_id.value)
+        data = pack("<B", self.permanent)
+        data += pack("<Q", self.gnss_frequencies.pack())
+        data += pack("<ff", self.pdop, self.tfop)
+        data += pack(
+            "<BBBB",
+            self.elevation_mask,
+            self.snr_mask,
+            self.sbas_corrections_enabled,
+            self.lband_mode.value,
+        )
+        data += pack("<II", self.lband_frequency, self.lband_baud)
+        data += pack("<II", self.primary_antenna_type, self.secondary_antenna_type)
+        data += pack("B", self.lband_satellite_id.value)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)
