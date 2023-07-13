@@ -88,12 +88,13 @@ class PacketsPeriodPacket:
         """Encode Packets Period Packet to ANPacket
         Returns the ANPacket"""
         data = pack("<B", self.permanent)
-        data += pack("<I", self.clear_existing_packets)
-        number_of_periods = int(len(self.packet_periods) / PacketPeriod.LENGTH)
-        for i in range(number_of_periods):
+        data += pack("<B", self.clear_existing_packets)
+        for i in range(len(self.packet_periods)):
             data += self.packet_periods[i].pack()
 
         an_packet = ANPacket()
-        an_packet.encode(self.ID, (2 + PacketPeriod.LENGTH * number_of_periods), data)
+        an_packet.encode(
+            self.ID, (2 + PacketPeriod.LENGTH * len(self.packet_periods)), data
+        )
 
         return an_packet
