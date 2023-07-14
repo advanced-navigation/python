@@ -157,11 +157,14 @@ def an_packet_decode(an_decoder: ANDecoder):
             crc = header_data[2] | (header_data[3] << 8)
 
             if crc == calculate_crc16(an_decoder.buffer[data_start:data_end]):
-                if header_data[0] not in PacketID._value2member_map_:
+                if (
+                    header_data[0] not in PacketID._value2member_map_
+                    and header_data[0] != 82
+                ):
                     decode_iterator += 1
                     continue
                 an_packet = ANPacket()
-                an_packet.id = PacketID(header_data[0])
+                an_packet.id = header_data[0]
                 an_packet.length = length
                 an_packet.header = bytearray(
                     an_decoder.buffer[decode_iterator:data_start]
