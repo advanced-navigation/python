@@ -27,7 +27,9 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass
+from typing import List, Optional
+from dataclasses import dataclass, field
+
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -35,7 +37,8 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class RTCMCorrectionsPacket:
     """Packet 55 - RTCM Corrections Packet"""
-    packet_data: [bytes]
+
+    packet_data: Optional[bytes] = field(default_factory=bytes, repr=False)
 
     ID = PacketID.rtcm_corrections
 
@@ -43,6 +46,10 @@ class RTCMCorrectionsPacket:
         """Encode RTCM Corrections Packet to ANPacket
         Returns the ANPacket"""
         an_packet = ANPacket()
-        an_packet.encode(self.ID, len(self.packet_data), self.packet_data)
+        an_packet.encode(
+            self.ID,
+            len(self.packet_data) if self.packet_data is not None else 0,
+            self.packet_data if self.packet_data is not None else bytes(),
+        )
 
         return an_packet

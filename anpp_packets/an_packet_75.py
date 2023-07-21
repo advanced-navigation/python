@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import pack, unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +37,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class ExternalMagnetometersFlags:
     """External Magnetometers Flags"""
+
     failure: bool = False
     overrange: bool = False
 
@@ -44,37 +46,37 @@ class ExternalMagnetometersFlags:
         self.overrange = (data & (1 << 1)) != 0
 
     def pack(self):
-        return (self.failure << 0) \
-               & (self.overrange << 1)
+        return (self.failure << 0) & (self.overrange << 1)
 
 
 @dataclass()
 class ExternalMagnetometersPacket:
     """Packet 75 - External Magnetometers Packet"""
+
     delay: float = 0
-    magnetometer: [float] * 3 = field(default_factory=list)
+    magnetometer: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
     flags: ExternalMagnetometersFlags = ExternalMagnetometersFlags()
 
     ID = PacketID.external_magnetometers
     LENGTH = 17
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<ffffB")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to External Magnetometers Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.delay = unpack('<f', bytes(an_packet.data[0:4]))[0]
-            self.magnetometer = unpack('<fff', bytes(an_packet.data[4:16]))
-            self.flags.unpack(an_packet.data[16])
+            values = self._structure.unpack_from(an_packet.data)
+            (self.delay, *self.magnetometer) = values[:4]
+            self.flags.unpack(values[4])
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode External Magnetometers Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<f', self.delay)
-        data += pack('<fff', self.magnetometer[0], self.magnetometer[1], self.magnetometer[2])
-        data += pack('<B', self.flags.pack())
+        data = self._structure.pack(self.delay, *self.magnetometer, self.flags.pack())
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

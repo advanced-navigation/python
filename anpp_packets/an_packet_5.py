@@ -29,13 +29,14 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from struct import pack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
 
 class ResetVerification(Enum):
     """Reset Verification Sequence"""
+
     hot_start = 0x21057A7E
     cold_start = 0x9A5D38B7
 
@@ -43,15 +44,18 @@ class ResetVerification(Enum):
 @dataclass()
 class ResetPacket:
     """Packet 5 - Reset Packet"""
+
     verification: ResetVerification = ResetVerification.hot_start
 
     ID = PacketID.reset
     LENGTH = 4
 
-    def encode(self):
+    _structure = struct.Struct("<I")
+
+    def encode(self) -> ANPacket:
         """Encode Reset Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<I', self.verification.value)
+        data = self._structure.pack(self.verification.value)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

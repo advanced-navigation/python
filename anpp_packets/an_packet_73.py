@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass
 class AutomotivePacket:
     """Packet 73 - Automotive Packet"""
+
     virtual_odometer_distance: float = 0
     slip_angle: float = 0
     velocity_x: float = 0
@@ -45,15 +46,19 @@ class AutomotivePacket:
     ID = PacketID.automotive
     LENGTH = 24
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<fffff4x")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Automotive Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.virtual_odometer_distance = unpack('<f', bytes(an_packet.data[0:4]))[0]
-            self.slip_angle = unpack('<f', bytes(an_packet.data[4:8]))[0]
-            self.velocity_x = unpack('<f', bytes(an_packet.data[8:12]))[0]
-            self.velocity_y = unpack('<f', bytes(an_packet.data[12:16]))[0]
-            self.distance_standard_deviation = unpack('<f', bytes(an_packet.data[16:20]))[0]
+            (
+                self.virtual_odometer_distance,
+                self.slip_angle,
+                self.velocity_x,
+                self.velocity_y,
+                self.distance_standard_deviation,
+            ) = self._structure.unpack_from(an_packet.data)
             return 0
         else:
             return 1

@@ -29,13 +29,14 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from struct import pack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
 
 class VehicleType(Enum):
     """Vehicle Type"""
+
     unconstrained = 0
     bicycle = 1
     car = 2
@@ -55,6 +56,7 @@ class VehicleType(Enum):
 @dataclass()
 class FilterOptionsPacket:
     """Packet 186 - Filter Options Packet"""
+
     permanent: int = 0
     vehicle_type: VehicleType = VehicleType.unconstrained
     internal_gnss_enabled: int = 0
@@ -68,31 +70,42 @@ class FilterOptionsPacket:
     ID = PacketID.filter_options
     LENGTH = 17
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<BBBxBBBBBB7x")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Filter Options Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.permanent = an_packet.data[0]
-            self.vehicle_type = VehicleType(an_packet.data[1])
-            self.internal_gnss_enabled = an_packet.data[2]
-            self.magnetometers_enabled = an_packet.data[3]
-            self.atmospheric_altitude_enabled = an_packet.data[4]
-            self.velocity_heading_enabled = an_packet.data[5]
-            self.reversing_detection_enabled = an_packet.data[6]
-            self.motion_analysis_enabled = an_packet.data[7]
-            self.automatic_magnetic_calibration_enabled = an_packet.data[8]
+            (
+                self.permanent,
+                vehicle_type_value,
+                self.internal_gnss_enabled,
+                self.magnetometers_enabled,
+                self.atmospheric_altitude_enabled,
+                self.velocity_heading_enabled,
+                self.reversing_detection_enabled,
+                self.motion_analysis_enabled,
+                self.automatic_magnetic_calibration_enabled,
+            ) = self._structure.unpack_from(an_packet.data)
+            self.vehicle_type = VehicleType(vehicle_type_value)
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Filter Options Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<BBBBBBBBBd', self.permanent, self.vehicle_type,
-                    self.internal_gnss_enabled, self.magnetometers_enabled,
-                    self.atmospheric_altitude_enabled, self.velocity_heading_enabled,
-                    self.reversing_detection_enabled, self.motion_analysis_enabled,
-                    self.automatic_magnetic_calibration_enabled, 0)
+        data = self._structure.pack(
+            self.permanent,
+            self.vehicle_type,
+            self.internal_gnss_enabled,
+            self.magnetometers_enabled,
+            self.atmospheric_altitude_enabled,
+            self.velocity_heading_enabled,
+            self.reversing_detection_enabled,
+            self.motion_analysis_enabled,
+            self.automatic_magnetic_calibration_enabled,
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import pack, unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,37 +37,50 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class ReferencePointOffsetsPacket:
     """Packet 194 - Reference Point Offsets Packet"""
+
     permanent: int = 0
-    primary_reference_point_offset: [float] * 3 = field(default_factory=list)
-    heave_point_2_offset: [float] * 3 = field(default_factory=list)
-    heave_point_3_offset: [float] * 3 = field(default_factory=list)
-    heave_point_4_offset: [float] * 3 = field(default_factory=list)
+    primary_reference_point_offset: List[float] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
+    heave_point_2_offset: List[float] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
+    heave_point_3_offset: List[float] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
+    heave_point_4_offset: List[float] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
 
     ID = PacketID.reference_point_offsets
     LENGTH = 49
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<B18f")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Reference Point Offsets Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.permanent = an_packet.data[0]
-            self.primary_reference_point_offset = unpack('<fff', bytes(an_packet.data[1:13]))[0]
-            self.heave_point_2_offset = unpack('<fff', bytes(an_packet.data[13:25]))[0]
-            self.heave_point_3_offset = unpack('<fff', bytes(an_packet.data[25:37]))[0]
-            self.heave_point_4_offset = unpack('<fff', bytes(an_packet.data[37:49]))[0]
+            values = self._structure.unpack_from(an_packet.data)
+            self.permanent = values[0]
+            self.primary_reference_point_offset = list(values[1:4])
+            self.heave_point_2_offset = list(values[4:7])
+            self.heave_point_3_offset = list(values[7:10])
+            self.heave_point_4_offset = list(values[10:13])
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Reference Point Offsets Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<Bffffffffffff', self.permanent,
-                    self.primary_reference_point_offset[0], self.primary_reference_point_offset[1],
-                    self.primary_reference_point_offset[2],
-                    self.heave_point_2_offset[0], self.heave_point_2_offset[1], self.heave_point_2_offset[2],
-                    self.heave_point_3_offset[0], self.heave_point_3_offset[1], self.heave_point_3_offset[2],
-                    self.heave_point_4_offset[0], self.heave_point_4_offset[1], self.heave_point_4_offset[2])
+        data = self._structure.pack(
+            self.permanent,
+            *self.primary_reference_point_offset,
+            *self.heave_point_2_offset,
+            *self.heave_point_3_offset,
+            *self.heave_point_4_offset,
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

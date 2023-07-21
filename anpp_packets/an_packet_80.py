@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 from anpp_packets.an_packet_20 import GNSSFixType
@@ -37,6 +37,7 @@ from anpp_packets.an_packet_20 import GNSSFixType
 @dataclass()
 class BasestationPacket:
     """Packet 80 - Basestation Packet"""
+
     unix_time: int = 0
     microseconds: int = 0
     position_latitude: float = 0
@@ -45,24 +46,28 @@ class BasestationPacket:
     relative_position_north: float = 0
     relative_position_east: float = 0
     relative_position_down: float = 0
-    gnss_fix_status: int = GNSSFixType.none
+    gnss_fix_status: GNSSFixType = GNSSFixType.none
 
     ID = PacketID.base_station
     LENGTH = 45
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<IIdddfffB")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Basestation Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.unix_time = unpack('<I', bytes(an_packet.data[0:4]))[0]
-            self.microseconds = unpack('<I', bytes(an_packet.data[4:8]))[0]
-            self.position_latitude = unpack('<d', bytes(an_packet.data[8:16]))[0]
-            self.position_longitude = unpack('<d', bytes(an_packet.data[16:24]))[0]
-            self.position_altitude = unpack('<d', bytes(an_packet.data[24:32]))[0]
-            self.relative_position_north = unpack('<f', bytes(an_packet.data[32:36]))[0]
-            self.relative_position_east = unpack('<f', bytes(an_packet.data[36:40]))[0]
-            self.relative_position_down = unpack('<f', bytes(an_packet.data[40:44]))[0]
-            self.gnss_fix_status = unpack('<B', bytes(an_packet.data[45]))[0]
+            (
+                self.unix_time,
+                self.microseconds,
+                self.position_latitude,
+                self.position_longitude,
+                self.position_altitude,
+                self.relative_position_north,
+                self.relative_position_east,
+                self.relative_position_down,
+                self.gnss_fix_status,
+            ) = self._structure.unpack_from(an_packet.data)
             return 0
         else:
             return 1

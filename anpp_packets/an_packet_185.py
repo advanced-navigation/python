@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import pack, unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,41 +37,54 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class InstallationAlignmentPacket:
     """Packet 185 - Installation Alignment Packet"""
+
     permanent: int = 0
-    alignment_dcm: [[float] * 3] * 3 = field(default_factory=list)
-    gnss_antenna_offset: [float] * 3 = field(default_factory=list)
-    odometer_offset: [float] * 3 = field(default_factory=list)
-    external_data_offset: [float] * 3 = field(default_factory=list)
+    alignment_dcm: List[List[float]] = field(
+        default_factory=lambda: [[0.0] * 3] * 3, repr=False
+    )
+    gnss_antenna_offset: List[float] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
+    odometer_offset: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    external_data_offset: List[float] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
 
     ID = PacketID.installation_alignment
     LENGTH = 73
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<B18f")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Installation Alignment Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.permanent = an_packet.data[0]
-            self.alignment_dcm = [[unpack('<fff', bytes(an_packet.data[1:13]))],
-                                  [unpack('<fff', bytes(an_packet.data[13:25]))],
-                                  [unpack('<fff', bytes(an_packet.data[25:37]))]]
-            self.gnss_antenna_offset = [unpack('<fff', bytes(an_packet.data[37:49]))]
-            self.odometer_offset = [unpack('<fff', bytes(an_packet.data[49:61]))]
-            self.external_data_offset = [unpack('<fff', bytes(an_packet.data[61:73]))]
+            values = self._structure.unpack_from(an_packet.data)
+            self.permanent = values[0]
+            self.alignment_dcm = [
+                list(values[1:4]),
+                list(values[4:7]),
+                list(values[7:10]),
+            ]
+            self.gnss_antenna_offset = list(values[10:13])
+            self.odometer_offset = list(values[13:16])
+            self.external_data_offset = list(values[16:19])
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Installation Alignment Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<B', self.permanent)
-        data += pack('<fff', self.alignment_dcm[0][0], self.alignment_dcm[0][1], self.alignment_dcm[0][2])
-        data += pack('<fff', self.alignment_dcm[1][0], self.alignment_dcm[1][1], self.alignment_dcm[1][2])
-        data += pack('<fff', self.alignment_dcm[2][0], self.alignment_dcm[2][1], self.alignment_dcm[2][2])
-        data += pack('<fff', self.gnss_antenna_offset[0], self.gnss_antenna_offset[1], self.gnss_antenna_offset[2])
-        data += pack('<fff', self.odometer_offset[0], self.odometer_offset[1], self.odometer_offset[2])
-        data += pack('<fff', self.external_data_offset[0], self.external_data_offset[1],
-                     self.external_data_offset[2])
+        data = self._structure.pack(
+            self.permanent,
+            *self.alignment_dcm[0],
+            *self.alignment_dcm[1],
+            *self.alignment_dcm[2],
+            *self.gnss_antenna_offset,
+            *self.odometer_offset,
+            *self.external_data_offset
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

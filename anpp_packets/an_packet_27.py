@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,16 +37,21 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class QuaternionOrientationStandardDeviationPacket:
     """Packet 27 - Quaternion Orientation Standard Deviation Packet"""
-    standard_deviation: [float] * 4 = field(default_factory=list)
+
+    standard_deviation: List[float] = field(
+        default_factory=lambda: [0, 0, 0, 0], repr=False
+    )
 
     ID = PacketID.quaternion_orientation_standard_deviation
     LENGTH = 16
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<ffff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Quaternion Orientation Standard Deviation Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.standard_deviation = unpack('<ffff', bytes(an_packet.data[0:16]))
+            self.standard_deviation = list(self._structure.unpack_from(an_packet.data))
             return 0
         else:
             return 1

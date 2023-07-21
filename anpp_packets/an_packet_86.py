@@ -35,34 +35,21 @@ from anpp_packets.an_packet_protocol import ANPacket
 
 
 @dataclass()
-class SensorTemperaturePacket:
-    """Packet 85 - Sensor Temperature Packet"""
+class SystemTemperaturePacket:
+    """Packet 86 - System Temperature Packet"""
 
-    accelerometer_temperature: List[float] = field(
-        default_factory=lambda: [0, 0, 0], repr=False
-    )
-    gyroscope_temperature: List[float] = field(
-        default_factory=lambda: [0, 0, 0], repr=False
-    )
-    magnetometer_temperature: float = 0
-    pressure_sensor_temperature: float = 0
+    system_temperature: float = 0
 
-    ID = PacketID.sensor_temperatures
-    LENGTH = 32
+    ID = PacketID.system_temperatures
+    LENGTH = 64
 
-    _structure = struct.Struct("<ffffffff")
+    _structure = struct.Struct("<f60x")
 
     def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Sensor Temperature Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            values = self._structure.unpack_from(an_packet.data)
-            self.accelerometer_temperature = list(values[:3])
-            (
-                *self.gyroscope_temperature,
-                self.magnetometer_temperature,
-                self.pressure_sensor_temperature,
-            ) = values[3:]
+            self.system_temperature = self._structure.unpack_from(an_packet.data)[0]
             return 0
         else:
             return 1

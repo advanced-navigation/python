@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import pack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,15 +36,18 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class RestoreFactorySettingsPacket:
     """Packet 4 - Restore Factory Settings Packet"""
+
     verification = 0x85429E1C
 
     ID = PacketID.restore_factory_settings
     LENGTH = 4
 
-    def encode(self):
+    _structure = struct.Struct("<I")
+
+    def encode(self) -> ANPacket:
         """Encode Restore Factory Settings Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<I', self.verification)
+        data = self._structure.pack(self.verification)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

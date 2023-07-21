@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import pack, unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class BaudRatesPacket:
     """Packet 182 - Baud Rates Packet"""
+
     permanent: int = 0
     primary_baud_rate: int = 0
     gpio_1_2_baud_rate: int = 0
@@ -44,26 +45,31 @@ class BaudRatesPacket:
     ID = PacketID.baud_rates
     LENGTH = 17
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<BIII4x")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Baud Rates Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.permanent = an_packet.data[0]
-            self.primary_baud_rate = unpack('<I', bytes(an_packet.data[1:5]))[0]
-            self.gpio_1_2_baud_rate = unpack('<I', bytes(an_packet.data[5:9]))[0]
-            self.auxiliary_baud_rate = unpack('<I', bytes(an_packet.data[9:13]))[0]
+            (
+                self.permanent,
+                self.primary_baud_rate,
+                self.gpio_1_2_baud_rate,
+                self.auxiliary_baud_rate,
+            ) = self._structure.unpack_from(an_packet.data)
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Baud Rates Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<B', self.permanent)
-        data += pack('<I', self.primary_baud_rate)
-        data += pack('<I', self.gpio_1_2_baud_rate)
-        data += pack('<I', self.auxiliary_baud_rate)
-        data += pack('<I', 0)
+        data = self._structure.pack(
+            self.permanent,
+            self.primary_baud_rate,
+            self.gpio_1_2_baud_rate,
+            self.auxiliary_baud_rate,
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

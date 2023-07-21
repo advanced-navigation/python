@@ -29,7 +29,8 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from struct import unpack
+from typing import List
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -93,18 +94,23 @@ class AdvancedNavigationGNSSReceiverInformation:
     gnss_receiver_model: AdvancedNavigationGNSSReceiverModel = (
         AdvancedNavigationGNSSReceiverModel.unknown
     )
-    serial_number: [bytes] * 24 = field(default_factory=list)
+    serial_number: bytes = field(default_factory=lambda: bytes([0] * 24), repr=False)
     firmware_version: int = 0
     hardware_version: int = 0
 
     LENGTH = 68
 
+    _structure = struct.Struct("<BB24bII")
+
     def unpack(self, data):
-        self.gnss_manufacturer_id = GNSSManufacturerID(data[0])
-        self.gnss_receiver_model = AdvancedNavigationGNSSReceiverModel(data[1])
-        self.serial_number = data[2:26]
-        self.firmware_version = unpack("<I", data[26:30])[0]
-        self.hardware_version = unpack("<I", data[30:34])[0]
+        values = self._structure.unpack_from(data)
+        self.gnss_manufacturer_id = GNSSManufacturerID(values[0])
+        self.gnss_receiver_model = AdvancedNavigationGNSSReceiverModel(values[1])
+        self.serial_number = bytes(values[2:26])
+        (
+            self.firmware_version,
+            self.hardware_version,
+        ) = values[26:28]
 
 
 @dataclass()
@@ -113,9 +119,11 @@ class TrimbleGNSSReceiverInformation:
 
     gnss_manufacturer_id: GNSSManufacturerID = GNSSManufacturerID.unknown
     gnss_receiver_model: TrimbleGNSSReceiverModel = TrimbleGNSSReceiverModel.unknown
-    serial_number: [bytes] * 10 = field(default_factory=list)
+    serial_number: bytes = field(default_factory=lambda: bytes([0] * 10), repr=False)
     firmware_version: int = 0
-    software_license_code: [int] * 3 = field(default_factory=list)
+    software_license_code: List[int] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
     omnistar_serial_number: int = 0
     omnistar_subscription_start_unix_time: int = 0
     omnistar_subscription_expiry_unix_time: int = 0
@@ -126,17 +134,23 @@ class TrimbleGNSSReceiverInformation:
 
     LENGTH = 48
 
+    _structure = struct.Struct("<BB10bIIIIIIIBB6x")
+
     def unpack(self, data):
-        self.gnss_manufacturer_id = GNSSManufacturerID(data[0])
-        self.gnss_receiver_model = TrimbleGNSSReceiverModel(data[1])
-        self.serial_number = data[2:12]
-        self.firmware_version = unpack("<I", data[12:16])[0]
-        self.software_license_code = unpack("<III", data[16:28])
-        self.omnistar_serial_number = unpack("<I", data[28:32])[0]
-        self.omnistar_subscription_start_unix_time = unpack("<I", data[32:36])[0]
-        self.omnistar_subscription_expiry_unix_time = unpack("<I", data[36:40])[0]
-        self.omnistar_engine_mode = OmnistarEngineMode(data[40])
-        self.rtk_software_license_accuracy = RTKSoftwareLicenseAccuracy(data[41])
+        values = self._structure.unpack_from(data)
+        self.gnss_manufacturer_id = GNSSManufacturerID(values[0])
+        self.gnss_receiver_model = TrimbleGNSSReceiverModel(values[1])
+        self.serial_number = bytes(values[2:12])
+        self.firmware_version = values[12]
+        (
+            *self.software_license_code,
+            self.omnistar_serial_number,
+            self.omnistar_subscription_start_unix_time,
+            self.omnistar_subscription_expiry_unix_time,
+        ) = values[13:19]
+
+        self.omnistar_engine_mode = OmnistarEngineMode(values[19])
+        self.rtk_software_license_accuracy = RTKSoftwareLicenseAccuracy(values[20])
 
 
 @dataclass()
@@ -152,7 +166,7 @@ class GNSSReceiverInformationPacket:
 
     ID = PacketID.gnss_receiver_information
 
-    def decode(self, an_packet: ANPacket):
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to GNSS Receiver Information Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (

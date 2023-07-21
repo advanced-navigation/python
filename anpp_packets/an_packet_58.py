@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class HeavePacket:
     """Packet 58 - Heave Packet"""
+
     heave_point_1: float = 0
     heave_point_2: float = 0
     heave_point_3: float = 0
@@ -44,14 +45,18 @@ class HeavePacket:
     ID = PacketID.heave
     LENGTH = 16
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<ffff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Heave Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.heave_point_1 = unpack('<f', bytes(an_packet.data[0:4]))[0]
-            self.heave_point_2 = unpack('<f', bytes(an_packet.data[4:8]))[0]
-            self.heave_point_3 = unpack('<f', bytes(an_packet.data[8:12]))[0]
-            self.heave_point_4 = unpack('<f', bytes(an_packet.data[12:16]))[0]
+            (
+                self.heave_point_1,
+                self.heave_point_2,
+                self.heave_point_3,
+                self.heave_point_4,
+            ) = self._structure.unpack_from(an_packet.data)
             return 0
         else:
             return 1

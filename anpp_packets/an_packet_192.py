@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import pack, unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class OdometerConfigurationPacket:
     """Packet 192 - Odometer Configuration Packet"""
+
     permanent: int = 0
     automatic_pulse_measurement_active: int = 0
     pulse_length: float = 0
@@ -43,21 +44,29 @@ class OdometerConfigurationPacket:
     ID = PacketID.odometer_configuration
     LENGTH = 8
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<BBxxf")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Odometer Configuration Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.permanent = an_packet.data[0]
-            self.automatic_pulse_measurement_active = an_packet.data[1]
-            self.pulse_length = unpack('<f', bytes(an_packet.data[4:8]))[0]
+            (
+                self.permanent,
+                self.automatic_pulse_measurement_active,
+                self.pulse_length,
+            ) = self._structure.unpack_from(an_packet.data)
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Odometer Configuration Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<BBHf', self.permanent, self.automatic_pulse_measurement_active, 0, self.pulse_length)
+        data = self._structure.pack(
+            self.permanent,
+            self.automatic_pulse_measurement_active,
+            self.pulse_length,
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

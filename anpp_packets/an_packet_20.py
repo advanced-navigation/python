@@ -29,13 +29,15 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from struct import unpack
+from typing import List
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
 
 class GNSSFixType(Enum):
     """GNSS Fix Type"""
+
     none = 0
     twoD = 1
     threeD = 2
@@ -49,6 +51,7 @@ class GNSSFixType(Enum):
 @dataclass()
 class SystemStatus:
     """System Status"""
+
     system_failure: bool = False
     accelerometer_sensor_failure: bool = False
     gyroscope_sensor_failure: bool = False
@@ -89,6 +92,7 @@ class SystemStatus:
 @dataclass()
 class FilterStatus:
     """Filter Status"""
+
     orientation_filter_initialised: bool = False
     ins_filter_initialised: bool = False
     heading_initialised: bool = False
@@ -125,6 +129,7 @@ class FilterStatus:
 @dataclass()
 class SystemStatePacket:
     """Packet 20 - System State Packet"""
+
     system_status: SystemStatus = SystemStatus()
     filter_status: FilterStatus = FilterStatus()
     unix_time_seconds: int = 0
@@ -132,33 +137,42 @@ class SystemStatePacket:
     latitude: float = 0
     longitude: float = 0
     height: float = 0
-    velocity: [float] * 3 = field(default_factory=list)
-    body_acceleration: [float] * 3 = field(default_factory=list)
-    g_force: float = field(default_factory=list)
-    orientation: [float] * 3 = field(default_factory=list)
-    angular_velocity: [float] * 3 = field(default_factory=list)
-    standard_deviation: [float] * 3 = field(default_factory=list)
+    velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    body_acceleration: List[float] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
+    g_force: float = 0
+    orientation: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    angular_velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    standard_deviation: List[float] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
 
     ID = PacketID.system_state
     LENGTH = 100
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<HHIIdddffffffffffffffff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to System State Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.system_status.unpack(unpack('<H', bytes(an_packet.data[0:2]))[0])
-            self.filter_status.unpack(unpack('<H', bytes(an_packet.data[2:4]))[0])
-            self.unix_time_seconds = unpack('<I', bytes(an_packet.data[4:8]))[0]
-            self.microseconds = unpack('<I', bytes(an_packet.data[8:12]))[0]
-            self.latitude = unpack('<d', bytes(an_packet.data[12:20]))[0]
-            self.longitude = unpack('<d', bytes(an_packet.data[20:28]))[0]
-            self.height = unpack('<d', bytes(an_packet.data[28:36]))[0]
-            self.velocity = unpack('<fff', bytes(an_packet.data[36:48]))
-            self.body_acceleration = unpack('<fff', bytes(an_packet.data[48:60]))
-            self.g_force = unpack('<f', bytes(an_packet.data[60:64]))[0]
-            self.orientation = unpack('<fff', bytes(an_packet.data[64:76]))
-            self.angular_velocity = unpack('<fff', bytes(an_packet.data[76:88]))
-            self.standard_deviation = unpack('<fff', bytes(an_packet.data[88:100]))
+            values = self._structure.unpack_from(an_packet.data)
+            self.system_status.unpack(values[0])
+            self.filter_status.unpack(values[1])
+            (
+                self.unix_time_seconds,
+                self.microseconds,
+                self.latitude,
+                self.longitude,
+                self.height,
+            ) = values[2:7]
+
+            self.velocity = list(values[7:10])
+            self.body_acceleration = list(values[10:13])
+            (self.g_force, *self.orientation) = values[13:17]
+            self.angular_velocity = list(values[17:20])
+            self.standard_deviation = list(values[20:23])
             return 0
         else:
             return 1

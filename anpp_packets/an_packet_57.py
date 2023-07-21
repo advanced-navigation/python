@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import pack, unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,27 +37,31 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class WindPacket:
     """Packet 57 - Wind Packet"""
-    wind_velocity: [float] * 2 = field(default_factory=list)
+
+    wind_velocity: List[float] = field(default_factory=lambda: [0, 0], repr=False)
     wind_standard_deviation: float = 0
 
     ID = PacketID.wind
     LENGTH = 12
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<fff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Wind Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.wind_velocity = unpack('<ff', bytes(an_packet.data[0:8]))
-            self.wind_standard_deviation = unpack('<f', bytes(an_packet.data[8:12]))[0]
+            (
+                *self.wind_velocity,
+                self.wind_standard_deviation,
+            ) = self._structure.unpack_from(an_packet.data)
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Wind Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<ff', self.wind_velocity[0], self.wind_velocity[1])
-        data += pack('<f', self.wind_standard_deviation)
+        data = self._structure.pack(*self.wind_velocity, self.wind_standard_deviation)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

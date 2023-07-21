@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import pack, unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,28 +37,32 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class ExternalVelocityPacket:
     """Packet 46 - External Velocity Packet"""
-    velocity: [float] * 3 = field(default_factory=list)
-    standard_deviation: [float] * 3 = field(default_factory=list)
+
+    velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    standard_deviation: List[float] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
 
     ID = PacketID.external_velocity
     LENGTH = 24
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<ffffff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to External Velocity Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.velocity = unpack('<fff', bytes(an_packet.data[0:12]))
-            self.standard_deviation = unpack('<fff', bytes(an_packet.data[12:24]))
+            values = self._structure.unpack_from(an_packet.data)
+            self.velocity = list(values[0:3])
+            self.standard_deviation = list(values[3:6])
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode External Velocity Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<fff', self.velocity[0], self.velocity[1], self.velocity[2])
-        data += pack('<fff', self.standard_deviation[0], self.standard_deviation[1], self.standard_deviation[2])
-
+        data = self._structure.pack(*self.velocity, *self.standard_deviation)
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)
 

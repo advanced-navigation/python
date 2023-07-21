@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +37,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass
 class RawDVLDataFlags:
     """Raw DVL Data Flags"""
+
     bottom_velocity_valid: bool = False
     water_velocity_valid: bool = False
     temperature_valid: bool = False
@@ -54,12 +56,13 @@ class RawDVLDataFlags:
 @dataclass()
 class RawDVLDataPacket:
     """Packet 70 - Raw DVL Data Packet"""
+
     unix_time: int = 0
     microseconds: int = 0
     status: RawDVLDataFlags = RawDVLDataFlags()
-    bottom_velocity: [float] * 3 = field(default_factory=list)
+    bottom_velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
     bottom_velocity_standard_deviation: float = 0
-    water_velocity: [float] * 3 = field(default_factory=list)
+    water_velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
     water_velocity_standard_deviation: float = 0
     water_velocity_layer_depth: float = 0
     depth: float = 0
@@ -69,21 +72,27 @@ class RawDVLDataPacket:
     ID = PacketID.raw_dvl_data
     LENGTH = 60
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<IIIffffffffffff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Raw DVL Data Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.unix_time = unpack('<I', bytes(an_packet.data[0:4]))[0]
-            self.microseconds = unpack('<I', bytes(an_packet.data[4:8]))[0]
-            self.status.unpack(unpack('<I', bytes(an_packet.data[8:12]))[0])
-            self.bottom_velocity = unpack('<fff', bytes(an_packet.data[12:24]))
-            self.bottom_velocity_standard_deviation = unpack('<f', bytes(an_packet.data[24:28]))[0]
-            self.water_velocity = unpack('<fff', bytes(an_packet.data[28:40]))
-            self.water_velocity_standard_deviation = unpack('<f', bytes(an_packet.data[40:44]))[0]
-            self.water_velocity_layer_depth = unpack('<f', bytes(an_packet.data[44:48]))[0]
-            self.depth = unpack('<f', bytes(an_packet.data[48:52]))[0]
-            self.altitude = unpack('<f', bytes(an_packet.data[52:56]))[0]
-            self.temperature = unpack('<f', bytes(an_packet.data[56:60]))[0]
+            values = self._structure.unpack_from(an_packet.data)
+            (self.unix_time, self.microseconds) = values[0:2]
+            self.status.unpack(values[2])
+
+            (*self.bottom_velocity, self.bottom_velocity_standard_deviation) = values[
+                3:7
+            ]
+            (
+                *self.water_velocity,
+                self.water_velocity_standard_deviation,
+                self.water_velocity_layer_depth,
+                self.depth,
+                self.altitude,
+                self.temperature,
+            ) = values[7:15]
             return 0
         else:
             return 1

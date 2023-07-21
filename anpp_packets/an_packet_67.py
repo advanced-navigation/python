@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import pack, unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class OdometerFlags:
     """Odometer Flags"""
+
     reverse_detection_supported: bool = False
 
     def unpack(self, flags_byte):
@@ -49,6 +50,7 @@ class OdometerFlags:
 @dataclass()
 class ExternalOdometerPacket:
     """Packet 67 - External Odometer Packet"""
+
     estimated_delay: float = 0
     speed: float = 0
     distance_travelled: float = 0  # Only valid for OBDII input
@@ -57,25 +59,33 @@ class ExternalOdometerPacket:
     ID = PacketID.external_odometer
     LENGTH = 13
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<fffB")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to External Odometer Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.estimated_delay = unpack('<f', bytes(an_packet.data[0:4]))[0]
-            self.speed = unpack('<f', bytes(an_packet.data[4:8]))[0]
-            self.distance_travelled = unpack('<f', bytes(an_packet.data[8:12]))[0]
-            self.flags.unpack(an_packet.data[12])
+            (
+                self.estimated_delay,
+                self.speed,
+                self.distance_travelled,
+                flags_value,
+            ) = self._structure.unpack_from(an_packet.data)
+
+            self.flags.unpack(flags_value)
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode External Odometer Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<f', self.estimated_delay)
-        data += pack('<f', self.speed)
-        data += pack('<f', self.distance_travelled)
-        data += pack('<B', self.flags.pack())
+        data = self._structure.pack(
+            self.estimated_delay,
+            self.speed,
+            self.distance_travelled,
+            self.flags.pack,
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

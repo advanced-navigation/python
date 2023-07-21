@@ -28,6 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -35,21 +37,22 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class UserDataPacket:
     """Packet 198 - User Data Packet"""
-    user_data: [bytes] = field(default_factory=list)
+
+    user_data: bytes = field(default_factory=bytes, repr=False)
 
     ID = PacketID.user_data
     LENGTH = 64
 
-    def decode(self, an_packet: ANPacket):
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to User Data Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.user_data = an_packet.data[0:self.LENGTH]
+            self.user_data = an_packet.data[0 : self.LENGTH]
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode User Data Packet to ANPacket
         Returns the ANPacket"""
         an_packet = ANPacket()

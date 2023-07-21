@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,9 +37,10 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class RawSensorsPacket:
     """Packet 28 - Raw Sensors Packet"""
-    accelerometers: [float] * 3 = field(default_factory=list)
-    gyroscopes: [float] * 3 = field(default_factory=list)
-    magnetometers: [float] * 3 = field(default_factory=list)
+
+    accelerometers: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    gyroscopes: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    magnetometers: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
     imu_temperature: float = 0
     pressure: float = 0
     pressure_temperature: float = 0
@@ -46,16 +48,20 @@ class RawSensorsPacket:
     ID = PacketID.raw_sensors
     LENGTH = 48
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<ffffffffffff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Raw Sensors Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.accelerometers = unpack('<fff', bytes(an_packet.data[0:12]))
-            self.gyroscopes = unpack('<fff', bytes(an_packet.data[12:24]))
-            self.magnetometers = unpack('<fff', bytes(an_packet.data[24:36]))
-            self.imu_temperature = unpack('<f', bytes(an_packet.data[36:40]))[0]
-            self.pressure = unpack('<f', bytes(an_packet.data[40:44]))[0]
-            self.pressure_temperature = unpack('<f', bytes(an_packet.data[44:48]))[0]
+            values = self._structure.unpack_from(an_packet.data)
+            self.accelerometers = list(values[0:3])
+            self.gyroscopes = list(values[3:6])
+            self.magnetometers = list(values[6:9])
+
+            (self.imu_temperature, self.pressure, self.pressure_temperature) = values[
+                9:12
+            ]
             return 0
         else:
             return 1
@@ -64,6 +70,7 @@ class RawSensorsPacket:
 @dataclass()
 class RawSensorStatusAdu:
     """Raw Sensor Status (ADU)"""
+
     absolute_pressure_valid: bool = False
     differential_pressure_valid: bool = False
     absolute_pressure_sensor_overrange: bool = False
@@ -88,6 +95,7 @@ class RawSensorStatusAdu:
 @dataclass()
 class RawSensorsPacketAdu:
     """Packet 28 - Raw Sensors Packet (ADU)"""
+
     absolute_pressure: float = 0
     differential_pressure: float = 0
     raw_sensors_status: RawSensorStatusAdu = RawSensorStatusAdu()
@@ -96,14 +104,18 @@ class RawSensorsPacketAdu:
     ID = PacketID.raw_sensors
     LENGTH = 13
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<ffBf")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Raw Sensors Packet (ADU)
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.absolute_pressure = unpack('<f', bytes(an_packet.data[0:4]))[0]
-            self.differential_pressure = unpack('<f', bytes(an_packet.data[4:8]))[0]
-            self.raw_sensors_status.unpack(an_packet.data[8])
-            self.temperature = unpack('<f', bytes(an_packet.data[9:13]))[0]
+            (
+                self.absolute_pressure,
+                self.differential_pressure,
+                self.raw_sensors_status,
+                self.temperature,
+            ) = self._structure.unpack_from(an_packet.data)
             return 0
         else:
             return 1

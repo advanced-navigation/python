@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import pack, unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,35 +37,43 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class ExternalPositionVelocityPacket:
     """Packet 44 - External Position Velocity Packet"""
-    position: [float] * 3 = field(default_factory=list)
-    velocity: [float] * 3 = field(default_factory=list)
-    position_standard_deviation: [float] * 3 = field(default_factory=list)
-    velocity_standard_deviation: [float] * 3 = field(default_factory=list)
+
+    position: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    position_standard_deviation: List[float] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
+    velocity_standard_deviation: List[float] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
 
     ID = PacketID.external_position_velocity
     LENGTH = 60
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<dddfffffffff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to External Position Velocity Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.position = unpack('<ddd', bytes(an_packet.data[0:24]))
-            self.velocity = unpack('<fff', bytes(an_packet.data[24:36]))
-            self.position_standard_deviation = unpack('<fff', bytes(an_packet.data[36:48]))
-            self.velocity_standard_deviation = unpack('<fff', bytes(an_packet.data[48:60]))
+            values = self._structure.unpack_from(an_packet.data)
+            self.position = list(values[0:3])
+            self.velocity = list(values[3:6])
+            self.position_standard_deviation = list(values[6:9])
+            self.velocity_standard_deviation = list(values[9:12])
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode External Position Velocity Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<ddd', self.position[0], self.position[1], self.position[2])
-        data += pack('<fff', self.velocity[0].self.velocity[1], self.velocity[2])
-        data += pack('<fff', self.position_standard_deviation[0].self.position_standard_deviation[1],
-                     self.position_standard_deviation[2])
-        data += pack('<fff', self.velocity_standard_deviation[0].self.velocity_standard_deviation[1],
-                     self.velocity_standard_deviation[2])
+        data = self._structure.pack(
+            *self.position,
+            *self.velocity,
+            *self.position_standard_deviation,
+            *self.velocity_standard_deviation
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

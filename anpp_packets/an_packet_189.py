@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import pack, unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,34 +37,43 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class MagneticCalibrationValuesPacket:
     """Packet 189 - Magnetic Calibration Values Packet"""
+
     permanent: int = 0
-    hard_iron: [float] * 3 = field(default_factory=list)
-    soft_iron: [[float] * 3] * 3 = field(default_factory=list)
+    hard_iron: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    soft_iron: List[List[float]] = field(default_factory=lambda: [[0.0] * 3] * 3)
 
     ID = PacketID.magnetic_calibration_values
     LENGTH = 49
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<Bffffffffffff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Magnetic Calibration Values Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.permanent = an_packet.data[0]
-            self.hard_iron = unpack('<fff', bytes(an_packet.data[1:13]))
-            self.soft_iron = [unpack('<fff', bytes(an_packet.data[13:25])),
-                              unpack('<fff', bytes(an_packet.data[25:37])),
-                              unpack('<fff', bytes(an_packet.data[37:49]))]
+            values = self._structure.unpack_from(an_packet.data)
+            self.permanent = values[0]
+            self.hard_iron = list(values[1:4])
+            self.soft_iron = [
+                list(values[4:7]),
+                list(values[7:10]),
+                list(values[10:13]),
+            ]
+
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Magnetic Calibration Values Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<B', self.permanent)
-        data += pack('<fff', self.hard_iron[0], self.hard_iron[1], self.hard_iron[2])
-        data += pack('<fff', self.soft_iron[0][0], self.soft_iron[0][1], self.soft_iron[0][2])
-        data += pack('<fff', self.soft_iron[1][0], self.soft_iron[1][1], self.soft_iron[1][2])
-        data += pack('<fff', self.soft_iron[2][0], self.soft_iron[2][1], self.soft_iron[2][2])
+        data = self._structure.pack(
+            self.permanent,
+            *self.hard_iron,
+            *self.soft_iron[0],
+            *self.soft_iron[1],
+            *self.soft_iron[2]
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

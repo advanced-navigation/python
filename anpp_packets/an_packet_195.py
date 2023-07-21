@@ -27,9 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from struct import pack, unpack
+from typing import List
+import struct
+from struct import pack
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -78,19 +80,74 @@ class NMEAFixBehaviour(Enum):
 
 
 @dataclass()
-class GPIOOutputRate:
-    """GPIO Output Rate"""
+class GPIOPort:
+    port_input_mode: PortInputMode = PortInputMode.inactive
+    port_output_mode: PortOutputMode = PortOutputMode.inactive
+    nmea_fix_behaviour: NMEAFixBehaviour = NMEAFixBehaviour.nmea_fix_behaviour_normal
+    gpzda_rate: GPIORate = GPIORate.gpio_rate_disabled
+    gpgga_rate: GPIORate = GPIORate.gpio_rate_disabled
+    gpvtg_rate: GPIORate = GPIORate.gpio_rate_disabled
+    gprmc_rate: GPIORate = GPIORate.gpio_rate_disabled
+    gphdt_rate: GPIORate = GPIORate.gpio_rate_disabled
+    gpgll_rate: GPIORate = GPIORate.gpio_rate_disabled
+    pashr_rate: GPIORate = GPIORate.gpio_rate_disabled
+    tss1_rate: GPIORate = GPIORate.gpio_rate_disabled
+    simrad_rate: GPIORate = GPIORate.gpio_rate_disabled
+    gprot_rate: GPIORate = GPIORate.gpio_rate_disabled
+    gphev_rate: GPIORate = GPIORate.gpio_rate_disabled
+    gpgsv_rate: GPIORate = GPIORate.gpio_rate_disabled
+    pfecatt_rate: GPIORate = GPIORate.gpio_rate_disabled
+    pfechve_rate: GPIORate = GPIORate.gpio_rate_disabled
+    pfechve_rate: GPIORate = GPIORate.gpio_rate_disabled
+    gpgst: GPIORate = GPIORate.gpio_rate_disabled
 
-    gpio1_rate: GPIORate = GPIORate.gpio_rate_disabled
-    auxiliary_rate: GPIORate = GPIORate.gpio_rate_disabled
+    LENGTH = 18
+
+    _structure = struct.Struct("<18B8x")
 
     def unpack(self, data):
-        """Unpack data bytes"""
-        self.gpio1_rate = GPIORate(data & 0x00FF)
-        self.auxiliary_rate = GPIORate((data & 0xFF00) >> 8)
+        values = self._structure.unpack_from(data)
+        self.port_input_mode = PortInputMode(values[0])
+        self.port_output_mode = PortOutputMode(values[1])
+        self.nmea_fix_behaviour = NMEAFixBehaviour(values[2])
+        self.gpzda_rate = GPIORate(values[3])
+        self.gpgga_rate = GPIORate(values[4])
+        self.gpvtg_rate = GPIORate(values[5])
+        self.gprmc_rate = GPIORate(values[6])
+        self.gphdt_rate = GPIORate(values[7])
+        self.gpgll_rate = GPIORate(values[8])
+        self.pashr_rate = GPIORate(values[9])
+        self.tss1_rate = GPIORate(values[10])
+        self.simrad_rate = GPIORate(values[11])
+        self.gprot_rate = GPIORate(values[12])
+        self.gphev_rate = GPIORate(values[13])
+        self.gpgsv_rate = GPIORate(values[11])
+        self.pfecatt_rate = GPIORate(values[15])
+        self.pfechve_rate = GPIORate(values[16])
+        self.gpgst = GPIORate(values[17])
 
-    def pack(self):
-        return pack("<HH", self.gpio1_rate.value, self.auxiliary_rate.value)
+    def pack(self) -> bytes:
+        data = self._structure.pack(
+            self.port_input_mode,
+            self.port_output_mode,
+            self.nmea_fix_behaviour,
+            self.gpzda_rate,
+            self.gpgga_rate,
+            self.gpvtg_rate,
+            self.gprmc_rate,
+            self.gphdt_rate,
+            self.gpgll_rate,
+            self.pashr_rate,
+            self.tss1_rate,
+            self.simrad_rate,
+            self.gprot_rate,
+            self.gphev_rate,
+            self.gpgsv_rate,
+            self.pfecatt_rate,
+            self.pfechve_rate,
+            self.gpgst,
+        )
+        return data
 
 
 @dataclass()
@@ -98,84 +155,114 @@ class GPIOOutputConfigurationPacket:
     """Packet 195 - GPIO Output Configuration Packet"""
 
     permanent: int = 0
-    port_input_mode: PortInputMode = PortInputMode.inactive
-    port_output_mode: PortOutputMode = PortOutputMode.inactive
-    nmea_fix_behaviour: NMEAFixBehaviour = NMEAFixBehaviour.nmea_fix_behaviour_normal
-    gpzda_rate: GPIOOutputRate = GPIOOutputRate()
-    gpgga_rate: GPIOOutputRate = GPIOOutputRate()
-    gpvtg_rate: GPIOOutputRate = GPIOOutputRate()
-    gprmc_rate: GPIOOutputRate = GPIOOutputRate()
-    gphdt_rate: GPIOOutputRate = GPIOOutputRate()
-    gpgll_rate: GPIOOutputRate = GPIOOutputRate()
-    pashr_rate: GPIOOutputRate = GPIOOutputRate()
-    tss1_rate: GPIOOutputRate = GPIOOutputRate()
-    simrad_rate: GPIOOutputRate = GPIOOutputRate()
-    gprot_rate: GPIOOutputRate = GPIOOutputRate()
-    gphev_rate: GPIOOutputRate = GPIOOutputRate()
-    gpgsv_rate: GPIOOutputRate = GPIOOutputRate()
-    pfecatt_rate: GPIOOutputRate = GPIOOutputRate()
-    pfechve_rate: GPIOOutputRate = GPIOOutputRate()
-    pfechve_rate: GPIOOutputRate = GPIOOutputRate()
-    gpgst: GPIOOutputRate = GPIOOutputRate()
+    gpio_1: GPIOPort = GPIOPort()
+    gpio_3: GPIOPort = GPIOPort()
+    logging: GPIOPort | None = None
+    data_ports: List[GPIOPort] | None = None
 
     ID = PacketID.gpio_output_configuration
-    LENGTH = 33
 
-    def decode(self, an_packet: ANPacket):
+    LENGTH_V1 = 33
+    LENGTH_V2 = 183
+    LENGTH_GPIO = 26
+
+    _structure_v1 = struct.Struct("<BBBxBxBxBxBxBxBxBxBxBxBxBxBxBxBxx")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to GPIO Output Configuration Packet
         Returns 0 on success and 1 on failure"""
-        if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
+        if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH_V2):
             self.permanent = an_packet.data[0]
-            self.port_input_mode = PortInputMode(an_packet.data[1])
-            self.port_output_mode = PortOutputMode(an_packet.data[2])
-            self.nmea_fix_behaviour = NMEAFixBehaviour(an_packet.data[3])
-            self.gpzda_rate.unpack(unpack("<B", bytes([an_packet.data[4]]))[0])
-            self.gpgga_rate.unpack(unpack("<B", bytes([an_packet.data[5]]))[0])
-            self.gpvtg_rate.unpack(unpack("<B", bytes([an_packet.data[6]]))[0])
-            self.gprmc_rate.unpack(unpack("<B", bytes([an_packet.data[7]]))[0])
-            self.gphdt_rate.unpack(unpack("<B", bytes([an_packet.data[8]]))[0])
-            self.gpgll_rate.unpack(unpack("<B", bytes([an_packet.data[9]]))[0])
-            self.pashr_rate.unpack(unpack("<B", bytes([an_packet.data[10]]))[0])
-            self.tss1_rate.unpack(unpack("<B", bytes([an_packet.data[11]]))[0])
-            self.simrad_rate.unpack(unpack("<B", bytes([an_packet.data[12]]))[0])
-            self.gprot_rate.unpack(unpack("<B", bytes([an_packet.data[13]]))[0])
-            self.gphev_rate.unpack(unpack("<B", bytes([an_packet.data[14]]))[0])
-            self.gpgsv_rate.unpack(unpack("<B", bytes([an_packet.data[15]]))[0])
-            self.pfecatt_rate.unpack(unpack("<B", bytes([an_packet.data[16]]))[0])
-            self.pfechve_rate.unpack(unpack("<B", bytes([an_packet.data[17]]))[0])
-            self.gpgst.unpack(unpack("<B", bytes([an_packet.data[18]]))[0])
+
+            self.gpio_3.unpack(an_packet.data[1:27])
+            self.gpio_1.unpack(an_packet.data[27:53])
+
+            self.logging = GPIOPort()
+            self.logging.unpack(an_packet.data[53:79])
+
+            self.data_ports = [GPIOPort(), GPIOPort(), GPIOPort(), GPIOPort()]
+            for i, port in enumerate(self.data_ports):
+                offset = i * 26
+                port.unpack(an_packet.data[79 + offset : 105 + offset])
+            return 0
+
+        elif (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH_V1):
+            values = self._structure_v1.unpack_from(an_packet.data)
+            self.permanent = values[0]
+            self.gpio_1.nmea_fix_behaviour = self.gpio_3.gpzda_rate = values[1]
+            self.gpio_1.gpzda_rate = GPIORate(values[2])
+            self.gpio_3.gpzda_rate = GPIORate((values[2] & 0xFF) >> 4)
+            self.gpio_1.gpgga_rate = GPIORate(values[4])
+            self.gpio_3.gpgga_rate = GPIORate((values[4] & 0xFF) >> 4)
+            self.gpio_1.gpvtg_rate = GPIORate(values[6])
+            self.gpio_3.gpvtg_rate = GPIORate((values[6] & 0xFF) >> 4)
+            self.gpio_1.gprmc_rate = GPIORate(values[8])
+            self.gpio_3.gprmc_rate = GPIORate((values[8] & 0xFF) >> 4)
+            self.gpio_1.gphdt_rate = GPIORate(values[10])
+            self.gpio_3.gphdt_rate = GPIORate((values[10] & 0xFF) >> 4)
+            self.gpio_1.gpgll_rate = GPIORate(values[12])
+            self.gpio_3.gpgll_rate = GPIORate((values[12] & 0xFF) >> 4)
+            self.gpio_1.pashr_rate = GPIORate(values[14])
+            self.gpio_3.pashr_rate = GPIORate((values[14] & 0xFF) >> 4)
+            self.gpio_1.tss1_rate = GPIORate(values[16])
+            self.gpio_3.tss1_rate = GPIORate((values[16] & 0xFF) >> 4)
+            self.gpio_1.simrad_rate = GPIORate(values[18])
+            self.gpio_3.simrad_rate = GPIORate((values[18] & 0xFF) >> 4)
+            self.gpio_1.gprot_rate = GPIORate(values[20])
+            self.gpio_3.gprot_rate = GPIORate((values[20] & 0xFF) >> 4)
+            self.gpio_1.gphev_rate = GPIORate(values[22])
+            self.gpio_3.gphev_rate = GPIORate((values[22] & 0xFF) >> 4)
+            self.gpio_1.gpgsv_rate = GPIORate(values[24])
+            self.gpio_3.gpgsv_rate = GPIORate((values[24] & 0xFF) >> 4)
+            self.gpio_1.pfecatt_rate = GPIORate(values[26])
+            self.gpio_3.pfecatt_rate = GPIORate((values[26] & 0xFF) >> 4)
+            self.gpio_1.pfechve_rate = GPIORate(values[28])
+            self.gpio_3.pfechve_rate = GPIORate((values[28] & 0xFF) >> 4)
+            self.gpio_1.gpgst = GPIORate(values[30])
+            self.gpio_3.gpgst = GPIORate((values[30] & 0xFF) >> 4)
 
             return 0
+
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode GPIO Output Configuration Packet to ANPacket
         Returns the ANPacket"""
-        data = pack(
-            "<BBIIIIIIIIIIIIIIBBB",
-            self.permanent,
-            self.nmea_fix_behaviour.value,
-            self.gpzda_rate.pack(),
-            self.gpgga_rate.pack(),
-            self.gpvtg_rate.pack(),
-            self.gprmc_rate.pack(),
-            self.gphdt_rate.pack(),
-            self.gpgll_rate.pack(),
-            self.pashr_rate.pack(),
-            self.tss1_rate.pack(),
-            self.simrad_rate.pack(),
-            self.gprot_rate.pack(),
-            self.gphev_rate.pack(),
-            self.gpgsv_rate.pack(),
-            self.pfecatt_rate.pack(),
-            self.pfechve_rate.pack(),
-            0,
-            0,
-            0,
-        )
 
-        an_packet = ANPacket()
-        an_packet.encode(self.ID, self.LENGTH, data)
+        if self.logging is not None and self.data_ports is not None:
+            data = pack("<B", self.permanent)
+            data += self.gpio_1.pack()
+            data += self.gpio_3.pack()
+            data += self.logging.pack()
+            for port in self.data_ports:
+                data += port.pack()
+
+            an_packet = ANPacket()
+            an_packet.encode(self.ID, self.LENGTH_V2, data)
+
+        else:
+            data = self._structure_v1.pack(
+                self.permanent,
+                self.gpio_1.nmea_fix_behaviour,
+                self.gpio_1.gpzda_rate.value | (self.gpio_3.gpzda_rate.value << 4),
+                self.gpio_1.gpgga_rate.value | (self.gpio_3.gpgga_rate.value << 4),
+                self.gpio_1.gpvtg_rate.value | (self.gpio_3.gpvtg_rate.value << 4),
+                self.gpio_1.gprmc_rate.value | (self.gpio_3.gprmc_rate.value << 4),
+                self.gpio_1.gphdt_rate.value | (self.gpio_3.gphdt_rate.value << 4),
+                self.gpio_1.gpgll_rate.value | (self.gpio_3.gpgll_rate.value << 4),
+                self.gpio_1.pashr_rate.value | (self.gpio_3.pashr_rate.value << 4),
+                self.gpio_1.tss1_rate.value | (self.gpio_3.tss1_rate.value << 4),
+                self.gpio_1.simrad_rate.value | (self.gpio_3.simrad_rate.value << 4),
+                self.gpio_1.gprot_rate.value | (self.gpio_3.gprot_rate.value << 4),
+                self.gpio_1.gphev_rate.value | (self.gpio_3.gphev_rate.value << 4),
+                self.gpio_1.gpgsv_rate.value | (self.gpio_3.gpgsv_rate.value << 4),
+                self.gpio_1.pfecatt_rate.value | (self.gpio_3.pfecatt_rate.value << 4),
+                self.gpio_1.pfechve_rate.value | (self.gpio_3.pfechve_rate.value << 4),
+                self.gpio_1.gpgst.value | (self.gpio_3.gpgst.value << 4),
+            )
+
+            an_packet = ANPacket()
+            an_packet.encode(self.ID, self.LENGTH_V1, data)
 
         return an_packet

@@ -29,19 +29,21 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from struct import pack, unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
 
 class OffsetType(Enum):
     """Offset Type"""
+
     manual_offset = 0
     automatic_offset = 1
 
 
 class AutomaticOffsetOrientation(Enum):
     """Automatic Offset Orientation"""
+
     primary_front_secondary_rear = 0
     primary_read_secondary_front = 1
     primary_right_secondary_left = 2
@@ -51,9 +53,12 @@ class AutomaticOffsetOrientation(Enum):
 @dataclass()
 class DualAntennaConfigurationPacket:
     """Packet 196 - Dual Antenna Configuration Packet"""
+
     permanent: int = 0
     offset_type: OffsetType = OffsetType.manual_offset
-    automatic_offset_orientation: AutomaticOffsetOrientation = AutomaticOffsetOrientation.primary_front_secondary_rear
+    automatic_offset_orientation: AutomaticOffsetOrientation = (
+        AutomaticOffsetOrientation.primary_front_secondary_rear
+    )
     manual_offset_x: float = 0
     manual_offset_y: float = 0
     manual_offset_z: float = 0
@@ -61,25 +66,34 @@ class DualAntennaConfigurationPacket:
     ID = PacketID.dual_antenna_configuration
     LENGTH = 17
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<BHBxfff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Dual Antenna Configuration Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.permanent = an_packet.data[0]
-            self.offset_type = OffsetType(unpack('<H', an_packet.data[1:3])[0])
-            self.automatic_offset_orientation = AutomaticOffsetOrientation(an_packet.data[3])
-            self.manual_offset_x = unpack('<f', bytes(an_packet.data[5:9]))[0]
-            self.manual_offset_y = unpack('<f', bytes(an_packet.data[9:13]))[0]
-            self.manual_offset_z = unpack('<f', bytes(an_packet.data[13:17]))[0]
+            values = self._structure.unpack_from(an_packet.data)
+            self.permanent = values[0]
+            self.offset_type = OffsetType(values[1])
+            self.automatic_offset_orientation = AutomaticOffsetOrientation(values[2])
+            self.manual_offset_x = values[3]
+            self.manual_offset_y = values[4]
+            self.manual_offset_z = values[5]
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Dual Antenna Configuration Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<BHBB', self.permanent, self.offset_type.value, self.automatic_offset_orientation.value, 0)
-        data += pack('<fff', self.manual_offset_x, self.manual_offset_y, self.manual_offset_z)
+        data = self._structure.pack(
+            self.permanent,
+            self.offset_type.value,
+            self.automatic_offset_orientation.value,
+            self.manual_offset_x,
+            self.manual_offset_y,
+            self.manual_offset_z,
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

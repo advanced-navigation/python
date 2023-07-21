@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,16 +37,19 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class EulerOrientationPacket:
     """Packet 39 - Euler Orientation Packet"""
-    orientation: [float] * 3 = field(default_factory=list)
+
+    orientation: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
 
     ID = PacketID.euler_orientation
     LENGTH = 12
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<fff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Euler Orientation Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.orientation = unpack('<fff', bytes(an_packet.data[0:12]))
+            self.orientation = list(self._structure.unpack_from(an_packet.data))
             return 0
         else:
             return 1

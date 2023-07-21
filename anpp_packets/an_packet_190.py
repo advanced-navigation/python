@@ -29,13 +29,14 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from struct import pack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
 
 class MagneticCalibrationAction(Enum):
     """Magnetic Calibration Action"""
+
     cancel = 0
     start_2d = 2
     start_3d = 3
@@ -45,15 +46,20 @@ class MagneticCalibrationAction(Enum):
 @dataclass()
 class MagneticCalibrationConfigurationPacket:
     """Packet 190 - Magnetic Calibration Configuration Packet"""
-    magnetic_calibration_action: MagneticCalibrationAction = MagneticCalibrationAction.cancel
+
+    magnetic_calibration_action: MagneticCalibrationAction = (
+        MagneticCalibrationAction.cancel
+    )
 
     ID = PacketID.magnetic_calibration_configuration
     LENGTH = 1
 
-    def encode(self):
+    _structure = struct.Struct("<B")
+
+    def encode(self) -> ANPacket:
         """Encode Magnetic Calibration Configuration Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<B', self.magnetic_calibration_action.value)
+        data = self._structure.pack(self.magnetic_calibration_action.value)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

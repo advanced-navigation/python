@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,18 +36,22 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class RunningTimePacket:
     """Packet 49 - Running Time Packet"""
+
     seconds: int = 0
     microseconds: int = 0
 
     ID = PacketID.running_time
     LENGTH = 8
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<II")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Running Time Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.seconds = unpack('<I', bytes(an_packet.data[0:4]))[0]
-            self.microseconds = unpack('<I', bytes(an_packet.data[4:8]))[0]
+            (self.seconds, self.microseconds) = self._structure.unpack_from(
+                an_packet.data
+            )
             return 0
         else:
             return 1

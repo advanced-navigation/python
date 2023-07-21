@@ -29,12 +29,14 @@
 
 from dataclasses import dataclass
 from enum import Enum
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
 
 class MagneticCalibrationStatus(Enum):
     """Magnetic Calibration Status"""
+
     not_completed = 0
     completed_2d = 1
     completed_3d = 2
@@ -52,20 +54,26 @@ class MagneticCalibrationStatus(Enum):
 @dataclass()
 class MagneticCalibrationStatusPacket:
     """Packet 191 - Magnetic Calibration Status Packet"""
-    magnetic_calibration_status: MagneticCalibrationStatus = MagneticCalibrationStatus.not_completed
+
+    magnetic_calibration_status: MagneticCalibrationStatus = (
+        MagneticCalibrationStatus.not_completed
+    )
     magnetic_calibration_progress_percentage: int = 0
     local_magnetic_error_percentage: int = 0
 
     ID = PacketID.magnetic_calibration_status
     LENGTH = 3
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<BBB")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Magnetic Calibration Status Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.magnetic_calibration_status = MagneticCalibrationStatus(an_packet.data[0])
-            self.magnetic_calibration_progress_percentage = an_packet.data[1]
-            self.local_magnetic_error_percentage = an_packet.data[2]
+            values = self._structure.unpack_from(an_packet.data)
+            self.magnetic_calibration_status = MagneticCalibrationStatus(values[0])
+            self.magnetic_calibration_progress_percentage = values[1]
+            self.local_magnetic_error_percentage = values[2]
             return 0
         else:
             return 1

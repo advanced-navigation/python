@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class FormattedTimePacket:
     """Packet 22 - Formatted Time Packet"""
+
     microseconds: int = 0
     year: int = 0
     year_day: int = 0
@@ -49,19 +50,23 @@ class FormattedTimePacket:
     ID = PacketID.formatted_time
     LENGTH = 14
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<IHHBBBBBB")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Formatted Time Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.microseconds = unpack('<I', an_packet.data[0:4])[0]
-            self.year = unpack('<H', an_packet.data[4:6])[0]
-            self.year_day = unpack('<H', an_packet.data[6:8])[0]
-            self.month = an_packet.data[8]
-            self.month_day = an_packet.data[9]
-            self.week_day = an_packet.data[10]
-            self.hour = an_packet.data[11]
-            self.minute = an_packet.data[12]
-            self.second = an_packet.data[13]
+            (
+                self.microseconds,
+                self.year,
+                self.year_day,
+                self.month,
+                self.month_day,
+                self.week_day,
+                self.hour,
+                self.minute,
+                self.second,
+            ) = self._structure.unpack_from(an_packet.data)
             return 0
         else:
             return 1

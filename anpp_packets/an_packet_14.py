@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 from anpp_packets.an_packet_3 import DeviceID
@@ -37,36 +38,50 @@ from anpp_packets.an_packet_3 import DeviceID
 @dataclass()
 class SubcomponentInformation:
     """Subcomponent Information"""
+
     software_version: int = 0
     device_id: DeviceID = DeviceID.unknown
     hardware_revision: int = 0
-    serial_number: [int] * 3 = field(default_factory=list)
+    serial_number: List[int] = field(default_factory=lambda: [0, 0, 0], repr=False)
 
     LENGTH = 24
 
+    _structure = struct.Struct("<IIIIII")
+
     def unpack(self, data):
-        self.software_version = unpack('<I', data[0:4])[0]
-        self.device_id = DeviceID(unpack('<I', data[4:8])[0])
-        self.hardware_revision = unpack('<I', data[8:12])[0]
-        self.serial_number = unpack('<III', data[12:24])
+        (
+            self.software_version,
+            device_id_value,
+            self.hardware_revision,
+            *self.serial_number,
+        ) = self._structure.unpack_from(data)
+        self.device_id = DeviceID(device_id_value)
 
 
 @dataclass()
 class SubcomponentInformationPacket:
     """Packet 14 - Subcomponent Information Packet"""
-    subcomponents_information: [SubcomponentInformation] = field(default_factory=list)
+
+    subcomponents_information: List[SubcomponentInformation] = field(
+        default_factory=list, repr=False
+    )
 
     ID = PacketID.subcomponent_information
 
-    def decode(self, an_packet: ANPacket):
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Subcomponent Information Packet
         Returns 0 on success and 1 on failure"""
-        if (an_packet.id == self.ID) and (len(an_packet.data) % SubcomponentInformation.LENGTH == 0):
-            subcomponents = int(len(an_packet.data) % SubcomponentInformation.LENGTH)
+        if (an_packet.id == self.ID) and (
+            len(an_packet.data) % SubcomponentInformation.LENGTH == 0
+        ):
+            subcomponents = len(an_packet.data) // SubcomponentInformation.LENGTH
             for i in range(subcomponents):
                 index = SubcomponentInformation.LENGTH * i
-                self.subcomponents_information.append(SubcomponentInformation())
-                self.subcomponents_information[i].unpack(an_packet.data[index:index+SubcomponentInformation.LENGTH])
+                subcomponent_info = SubcomponentInformation()
+                subcomponent_info.unpack(
+                    an_packet.data[index : index + SubcomponentInformation.LENGTH]
+                )
+                self.subcomponents_information.append(subcomponent_info)
             return 0
         else:
             return 1

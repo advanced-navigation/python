@@ -29,13 +29,14 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from struct import pack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
 
 class GPIO1Function(Enum):
     """GPIO1 Function"""
+
     inactive = 0
     pps_output = 1
     gnss_fix_output = 2
@@ -75,6 +76,7 @@ class GPIO1Function(Enum):
 
 class GPIO2Function(Enum):
     """GPIO2 Function"""
+
     inactive = 0
     pps_output = 1
     gnss_fix_output = 2
@@ -122,6 +124,7 @@ class GPIO2Function(Enum):
 
 class AuxiliaryTxFunction(Enum):
     """Auxiliary Tx Function"""
+
     inactive = 0
     pps_output = 1
     gnss_fix_output = 2
@@ -136,6 +139,7 @@ class AuxiliaryTxFunction(Enum):
 
 class AuxiliaryRxFunction(Enum):
     """Auxiliary Rx Function"""
+
     inactive = 0
     odometer_input = 3
     zero_velocity_input = 4
@@ -177,43 +181,63 @@ class AuxiliaryRxFunction(Enum):
 
 class GPIOIndex(Enum):
     """GPIO Index"""
+
     gpio1 = 0
     gpio2 = 1
     auxiliary_tx = 2
     auxiliary_rx = 3
 
 
+class GPIOVoltage(Enum):
+    """GPIO Index"""
+
+    v_5 = 0
+    v_3_3 = 1
+    power_disabled = 2
+
+
 @dataclass()
 class GPIOConfigurationPacket:
     """Packet 188 - GPIO Configuration Packet"""
+
     permanent: int = 0
     gpio1_function: GPIO1Function = GPIO1Function.inactive
     gpio2_function: GPIO2Function = GPIO2Function.inactive
     auxTx_function: AuxiliaryTxFunction = AuxiliaryTxFunction.inactive
     auxRx_function: AuxiliaryRxFunction = AuxiliaryRxFunction.inactive
+    gpio_voltage_selection: GPIOVoltage = GPIOVoltage.power_disabled
 
     ID = PacketID.gpio_configuration
     LENGTH = 13
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("BBBBBB7x")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to GPIO Configuration Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.permanent = an_packet.data[0]
-            self.gpio1_function = GPIO1Function(an_packet.data[1])
-            self.gpio2_function = GPIO2Function(an_packet.data[2])
-            self.auxTx_function = AuxiliaryTxFunction(an_packet.data[3])
-            self.auxRx_function = AuxiliaryRxFunction(an_packet.data[4])
+            values = self._structure.unpack_from(an_packet.data)
+            self.permanent = values[0]
+            self.gpio1_function = GPIO1Function(values[1])
+            self.gpio2_function = GPIO2Function(values[2])
+            self.auxTx_function = AuxiliaryTxFunction(values[3])
+            self.auxRx_function = AuxiliaryRxFunction(values[4])
+            self.gpio_voltage_selection = GPIOVoltage(values[5])
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode GPIO Configuration Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<BBBBBd', self.permanent,
-                    self.gpio1_function.value, self.gpio2_function.value,
-                    self.auxTx_function.value, self.auxRx_function.value, 0)
+        data = self._structure.pack(
+            self.permanent,
+            self.gpio1_function.value,
+            self.gpio2_function.value,
+            self.auxTx_function.value,
+            self.auxRx_function.value,
+            self.gpio_voltage_selection,
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

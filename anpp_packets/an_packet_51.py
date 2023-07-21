@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class OdometerStatePacket:
     """Packet 51 - Odometer State Packet"""
+
     pulse_count: int = 0
     distance: float = 0
     speed: float = 0
@@ -46,15 +47,19 @@ class OdometerStatePacket:
     ID = PacketID.odometer_state
     LENGTH = 20
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<ifffBxxx")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Odometer State Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.pulse_count = unpack('<i', bytes(an_packet.data[0:4]))[0]
-            self.distance = unpack('<f', bytes(an_packet.data[4:8]))[0]
-            self.speed = unpack('<f', bytes(an_packet.data[8:12]))[0]
-            self.slip = unpack('<f', bytes(an_packet.data[12:16]))[0]
-            self.active = an_packet.data[16]
+            (
+                self.pulse_count,
+                self.distance,
+                self.speed,
+                self.slip,
+                self.active,
+            ) = self._structure.unpack_from(an_packet.data)
             return 0
         else:
             return 1

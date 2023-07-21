@@ -26,9 +26,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER          #
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
-
 from enum import Enum
-from struct import unpack
+import struct
 from dataclasses import dataclass
 from anpp_packets.an_packet_protocol import ANPacket
 from anpp_packets.an_packets import PacketID
@@ -36,6 +35,7 @@ from anpp_packets.an_packets import PacketID
 
 class AcknowledgeResult(Enum):
     """Acknowledge Result"""
+
     success = 0
     failure_crc = 1
     failure_length = 2
@@ -48,20 +48,24 @@ class AcknowledgeResult(Enum):
 @dataclass()
 class AcknowledgePacket:
     """Packet 0 - Acknowledge Packet"""
-    packet_id: PacketID = 0
+
+    packet_id: PacketID = PacketID.acknowledge
     packet_crc: int = 0
     acknowledge_result: AcknowledgeResult = AcknowledgeResult.success
 
     ID = PacketID.acknowledge
     LENGTH = 4
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<BHB")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Acknowledge Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.packet_id = PacketID(an_packet.data[0])
-            self.packet_crc = unpack('<H', bytes(an_packet.data[1:3]))[0]
-            self.acknowledge_result = AcknowledgeResult(an_packet.data[3])
+            values = self._structure.unpack_from(an_packet.data)
+            self.packet_id = PacketID(values[0])
+            self.packet_crc = values[1]
+            self.acknowledge_result = AcknowledgeResult(values[2])
             return 0
         else:
             return 1

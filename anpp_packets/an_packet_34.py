@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,20 +37,25 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class UTMPositionPacket:
     """Packet 34 - UTM Position Packet"""
-    position: [float] * 3 = field(default_factory=list)
+
+    position: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
     zone_number: int = 0
     zone_character: int = 0
 
     ID = PacketID.utm_position
     LENGTH = 26
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<dddBB")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to UTM Position Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.position = unpack('<ddd', bytes(an_packet.data[0:24]))
-            self.zone_number = an_packet.data[24]
-            self.zone_character = an_packet.data[25]
+            (
+                *self.position,
+                self.zone_number,
+                self.zone_character,
+            ) = self._structure.unpack_from(an_packet.data)
             return 0
         else:
             return 1

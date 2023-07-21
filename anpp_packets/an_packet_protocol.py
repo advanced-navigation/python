@@ -164,7 +164,7 @@ def an_packet_decode(an_decoder: ANDecoder):
                     decode_iterator += 1
                     continue
                 an_packet = ANPacket()
-                an_packet.id = header_data[0]
+                an_packet.id = int(header_data[0])
                 an_packet.length = length
                 an_packet.header = bytearray(
                     an_decoder.buffer[decode_iterator:data_start]

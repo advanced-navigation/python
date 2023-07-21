@@ -29,13 +29,14 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from struct import unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
 
 class FileTransferResponse(Enum):
     """File Transfer Response"""
+
     completed_successfully = 0
     ready = 1
     index_mismatch = 2
@@ -57,6 +58,7 @@ class FileTransferResponse(Enum):
 @dataclass()
 class FileTransferAcknowledgePacket:
     """Packet 8 - File Transfer Acknowledge Packet"""
+
     unique_id: int = 0
     data_index: int = 0
     response_code: FileTransferResponse = FileTransferResponse.completed_successfully
@@ -64,13 +66,16 @@ class FileTransferAcknowledgePacket:
     ID = PacketID.file_transfer_acknowledge
     LENGTH = 9
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<IIB")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to File Transfer Acknowledge Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.unique_id = unpack('<I', an_packet.data[0:4])[0]
-            self.data_index = unpack('<I', an_packet.data[4:8])[0]
-            self.response_code = FileTransferResponse(an_packet.data[8])
+            values = self._structure.unpack_from(an_packet.data)
+            self.unique_id = values[0]
+            self.data_index = values[1]
+            self.response_code = FileTransferResponse(values[2])
             return 0
         else:
             return 1

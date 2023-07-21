@@ -29,13 +29,15 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from struct import pack
+from typing import List
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
 
 class PassthroughRoute(Enum):
     """Passthrough Route"""
+
     gpio = 0
     auxiliary = 1
 
@@ -43,25 +45,28 @@ class PassthroughRoute(Enum):
 @dataclass()
 class SerialPortPassthroughPacket:
     """Packet 10 - Serial Port Passthrough Packet"""
+
     passthrough_route: PassthroughRoute = PassthroughRoute.gpio
-    passthrough_data: [bytes] = field(default_factory=list)
+    passthrough_data: bytes = field(default_factory=bytes, repr=False)
 
     ID = PacketID.serial_port_passthrough
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<B")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Serial Port Passthrough Packet
         Returns 0 on success and 1 on failure"""
         if an_packet.id == self.ID:
             self.passthrough_route = PassthroughRoute(an_packet.data[0])
-            self.passthrough_data = an_packet.data[1]
+            self.passthrough_data = bytes(an_packet.data[1:])
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Serial Port Passthrough Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<B', self.passthrough_route.value)
+        data = self._structure.pack(self.passthrough_route.value)
         data += self.passthrough_data
 
         an_packet = ANPacket()

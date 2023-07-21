@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,18 +37,24 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class DCMOrientationPacket:
     """Packet 41 - DCM Orientation Packet"""
-    orientation: [[float] * 3] * 3 = field(default_factory=list)
+
+    orientation: List[List[float]] = field(default_factory=lambda: [[0.0] * 3] * 3)
 
     ID = PacketID.dcm_orientation
     LENGTH = 36
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<fffffffff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to DCM Orientation Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.orientation = [unpack('<fff', bytes(an_packet.data[0:12])),
-                                unpack('<fff', bytes(an_packet.data[12:24])),
-                                unpack('<fff', bytes(an_packet.data[24:36]))]
+            values = self._structure.unpack_from(an_packet.data)
+            self.orientation = [
+                list(values[0:3]),
+                list(values[3:6]),
+                list(values[6:9]),
+            ]
             return 0
         else:
             return 1

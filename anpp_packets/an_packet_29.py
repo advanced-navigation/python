@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import pack, unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +37,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class RawGNSSFlags:
     """Raw GNSS Flags"""
+
     fix_type: int = 0
     doppler_velocity_valid: bool = False
     time_valid: bool = False
@@ -54,7 +56,7 @@ class RawGNSSFlags:
 
     def unpack(self, flags_byte):
         """Unpack data bytes"""
-        self.fix_type = (flags_byte & 0x0007)
+        self.fix_type = flags_byte & 0x0007
         self.doppler_velocity_valid = (flags_byte & (1 << 3)) != 0
         self.time_valid = (flags_byte & (1 << 4)) != 0
         self.external_gnss = (flags_byte & (1 << 5)) != 0
@@ -72,11 +74,14 @@ class RawGNSSFlags:
 @dataclass()
 class RawGNSSPacket:
     """Packet 29 - Raw GNSS Packet"""
+
     unix_time_seconds: int = 0
     microseconds: int = 0
-    position: [float] * 3 = field(default_factory=list)
-    velocity: [float] * 3 = field(default_factory=list)
-    position_standard_deviation: [float] * 3 = field(default_factory=list)
+    position: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    position_standard_deviation: List[float] = field(
+        default_factory=lambda: [0, 0, 0], repr=False
+    )
     tilt: float = 0
     """Only valid if an external dual antenna GNSS system is connected"""
     heading: float = 0
@@ -90,36 +95,45 @@ class RawGNSSPacket:
     ID = PacketID.raw_gnss
     LENGTH = 74
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<IIdddffffffffffH")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Raw GNSS Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.unix_time_seconds = unpack('<I', bytes(an_packet.data[0:4]))[0]
-            self.microseconds = unpack('<I', bytes(an_packet.data[4:8]))[0]
-            self.position = unpack('<ddd', bytes(an_packet.data[8:32]))
-            self.velocity = unpack('<fff', bytes(an_packet.data[32:44]))
-            self.position_standard_deviation = unpack('<fff', bytes(an_packet.data[44:56]))
-            self.tilt = unpack('<f', bytes(an_packet.data[56:60]))[0]
-            self.heading = unpack('<f', bytes(an_packet.data[60:64]))[0]
-            self.tilt_standard_deviation = unpack('<f', bytes(an_packet.data[64:68]))[0]
-            self.heading_standard_deviation = unpack('<f', bytes(an_packet.data[68:72]))[0]
-            self.flags.unpack(unpack('<H', bytes(an_packet.data[72:74]))[0])
+            values = self._structure.unpack_from(an_packet.data)
+            (self.unix_time_seconds, self.microseconds, *self.position) = values[0:6]
+            self.velocity = list(values[6:9])
+
+            (
+                *self.position_standard_deviation,
+                self.tilt,
+                self.heading,
+                self.tilt_standard_deviation,
+                self.heading_standard_deviation,
+                flags_value,
+            ) = values[9:]
+
+            self.flags.unpack(flags_value)
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Raw GNSS Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<II', self.unix_time_seconds, self.microseconds)
-        data += pack('<ddd', self.position[0], self.position[1], self.position[2])
-        data += pack('<fff', self.velocity[0], self.velocity[1], self.velocity[2])
-        data += pack('<fff', self.position_standard_deviation[0], self.position_standard_deviation[1],
-                     self.position_standard_deviation[2])
-        data += pack('<ff', self.tilt, self.heading)
-        data += pack('<ff', self.tilt_standard_deviation, self.heading_standard_deviation)
-        data += pack('<H', self.flags)
-
+        data = self._structure.pack(
+            self.unix_time_seconds,
+            self.microseconds,
+            *self.position,
+            *self.velocity,
+            *self.position_standard_deviation,
+            self.tilt,
+            self.heading,
+            self.tilt_standard_deviation,
+            self.heading_standard_deviation,
+            self.flags
+        )
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)
 

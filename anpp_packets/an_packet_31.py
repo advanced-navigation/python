@@ -29,13 +29,15 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from struct import unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
 
 class SatelliteSystem(Enum):
     """Satellite System"""
+
     unknown = 0
     gps = 1
     glonass = 2
@@ -50,6 +52,7 @@ class SatelliteSystem(Enum):
 @dataclass()
 class SatelliteFrequencies:
     """Satellite Frequencies"""
+
     l1_ca: bool = False
     l1_c: bool = False
     l1_p: bool = False
@@ -73,6 +76,7 @@ class SatelliteFrequencies:
 @dataclass()
 class DetailedSatellite:
     """Detailed Satellite"""
+
     satellite_system: SatelliteSystem = SatelliteSystem.unknown
     number: int = 0
     frequencies: SatelliteFrequencies = SatelliteFrequencies()
@@ -82,34 +86,45 @@ class DetailedSatellite:
 
     LENGTH = 7
 
+    _structure = struct.Struct("<BBBBHB")
+
     def unpack(self, data):
         """Unpack data bytes"""
-        self.satellite_system = SatelliteSystem(data[0])
-        self.number = data[1]
-        self.frequencies.unpack(data[2])
-        self.elevation = data[3]
-        self.azimuth = unpack('<H', data[4:6])[0]
-        self.snr = data[6]
+        (
+            satellite_system_value,
+            self.number,
+            frequency_value,
+            self.elevation,
+            self.azimuth,
+            self.snr,
+        ) = self._structure.unpack_from(data)
+
+        self.satellite_system = SatelliteSystem(satellite_system_value)
+        self.frequencies.unpack(frequency_value)
 
 
 @dataclass()
 class DetailedSatellitesPacket:
     """Packet 31 - Detailed Satellites Packet"""
-    satellites: [DetailedSatellite] = field(default_factory=list)
+
+    satellites: List[DetailedSatellite] = field(default_factory=list, repr=False)
 
     ID = PacketID.detailed_satellites
     MAXIMUM_DETAILED_SATELLITES = 32
 
-    def decode(self, an_packet: ANPacket):
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Detailed Satellites Packet
         Returns 0 on success and 1 on failure"""
-        if (an_packet.id == self.ID) \
-                and ((len(an_packet.data) % DetailedSatellite.LENGTH) == 0):
+        if (an_packet.id == self.ID) and (
+            (len(an_packet.data) % DetailedSatellite.LENGTH) == 0
+        ):
             number_of_satellites = int(len(an_packet.data) / DetailedSatellite.LENGTH)
             self.satellites = [DetailedSatellite()] * number_of_satellites
             for i in range(number_of_satellites):
                 index = i * DetailedSatellite.LENGTH
-                self.satellites[i].unpack(an_packet.data[index:index+DetailedSatellite.LENGTH])
+                self.satellites[i].unpack(
+                    an_packet.data[index : index + DetailedSatellite.LENGTH]
+                )
             return 0
         else:
             return 1

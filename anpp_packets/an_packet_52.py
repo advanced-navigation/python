@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import pack, unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,26 +36,30 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class ExternalTimePacket:
     """Packet 52 - External Time Packet"""
+
     unix_time_seconds: int = 0
     microseconds: int = 0
 
     ID = PacketID.external_time
     LENGTH = 8
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<II")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to External Time Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.unix_time_seconds = unpack('<f', bytes(an_packet.data[0:4]))[0]
-            self.microseconds = unpack('<f', bytes(an_packet.data[4:8]))[0]
+            (self.unix_time_seconds, self.microseconds) = self._structure.unpack_from(
+                an_packet.data
+            )
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode External Time Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<ff', self.unix_time_seconds, self.microseconds)
+        data = self._structure.pack(self.unix_time_seconds, self.microseconds)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 from anpp_packets.an_packet_20 import SystemStatus, FilterStatus
@@ -37,18 +37,22 @@ from anpp_packets.an_packet_20 import SystemStatus, FilterStatus
 @dataclass()
 class StatusPacket:
     """Packet 23 - Status Packet"""
+
     system_status: SystemStatus = SystemStatus()
     filter_status: FilterStatus = FilterStatus()
 
     ID = PacketID.status
     LENGTH = 4
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<HH")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Status Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.system_status.unpack(unpack('<H', bytes(an_packet.data[0:2]))[0])
-            self.filter_status.unpack(unpack('<H', bytes(an_packet.data[2:4]))[0])
+            values = self._structure.unpack_from(an_packet.data)
+            self.system_status.unpack(values[0])
+            self.filter_status.unpack(values[1])
             return 0
         else:
             return 1

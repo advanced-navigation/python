@@ -29,7 +29,8 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from struct import unpack
+from typing import List
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -57,22 +58,28 @@ class DeviceID(Enum):
 @dataclass()
 class DeviceInformationPacket:
     """Packet 3 - Device Information Packet"""
+
     software_version: int = 0
     device_id: DeviceID = DeviceID.unknown
     hardware_revision: int = 0
-    serial_number: [int] * 3 = field(default_factory=list)
+    serial_number: List[int] = field(default_factory=lambda: [0, 0, 0], repr=False)
 
     ID = PacketID.device_information
     LENGTH = 24
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<BHB")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Device Information Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.software_version = unpack('<I', an_packet.data[0:4])[0]
-            self.device_id = DeviceID(unpack('<I', an_packet.data[4:8])[0])
-            self.hardware_revision = unpack('<I', an_packet.data[8:12])[0]
-            self.serial_number = unpack('<III', an_packet.data[12:24])
+            (
+                self.software_version,
+                device_id_value,
+                self.hardware_revision,
+                *self.serial_number,
+            ) = self._structure.unpack_from(an_packet.data)
+            self.device_id = DeviceID(device_id_value)
             return 0
         else:
             return 1

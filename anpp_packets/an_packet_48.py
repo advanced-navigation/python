@@ -27,8 +27,8 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
-from struct import pack, unpack
+from dataclasses import dataclass
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,26 +36,30 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class ExternalHeadingPacket:
     """Packet 48 - External Heading Packet"""
+
     heading: float = 0
     standard_deviation: float = 0
 
     ID = PacketID.external_heading
     LENGTH = 8
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<ff")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to External Heading Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.heading = unpack('<f', bytes(an_packet.data[0:4]))[0]
-            self.standard_deviation = unpack('<f', bytes(an_packet.data[4:8]))[0]
+            (self.heading, self.standard_deviation) = self._structure.unpack_from(
+                an_packet.data
+            )
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode External Heading Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<ff', self.heading, self.standard_deviation)
+        data = self._structure.pack(self.heading, self.standard_deviation)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

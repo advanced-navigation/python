@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import pack, unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class PacketTimerPeriodPacket:
     """Packet 180 - Packet Timer Period Packet"""
+
     permanent: int = 0
     utc_synchronisation: int = 0
     packet_timer_period: int = 0
@@ -43,23 +44,27 @@ class PacketTimerPeriodPacket:
     ID = PacketID.packet_timer_period
     LENGTH = 4
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<BBH")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Packet Timer Period Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.permanent = an_packet.data[0]
-            self.utc_synchronisation = an_packet.data[1]
-            self.packet_timer_period = unpack('<H', bytes(an_packet.data[2:4]))[0]
+            (
+                self.permanent,
+                self.utc_synchronisation,
+                self.packet_timer_period,
+            ) = self._structure.unpack_from(an_packet.data)
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Packet Timer Period Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<B', self.permanent)
-        data += pack('<B', self.utc_synchronisation)
-        data += pack('<H', self.packet_timer_period)
+        data = self._structure.pack(
+            self.permanent, self.utc_synchronisation, self.packet_timer_period
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

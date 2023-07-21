@@ -29,19 +29,21 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from struct import pack, unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
 
 class CANProtocol(Enum):
     """CAN Protocol"""
+
     CANopen = 0
 
 
 @dataclass()
 class CANConfigurationPacket:
     """Packet 203 - CAN Configuration Packet"""
+
     permanent: int = 0
     enabled: int = 0
     baud_rate: int = 0
@@ -50,22 +52,32 @@ class CANConfigurationPacket:
     ID = PacketID.can_configuration
     LENGTH = 11
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<BBIB4x")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to CAN Configuration Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.permanent = an_packet.data[0]
-            self.enabled = an_packet.data[1]
-            self.baud_rate = unpack('<I', an_packet.data[2:6])[0]
-            self.can_protocol = CANProtocol(an_packet.data[7])
+            (
+                self.permanent,
+                self.enabled,
+                self.baud_rate,
+                can_protocol_value,
+            ) = self._structure.unpack_from(an_packet.data)
+            self.can_protocol = CANProtocol(can_protocol_value)
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode CAN Configuration Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<BBIBI', self.permanent, self.enabled, self.baud_rate, self.can_protocol.value, 0)
+        data = self._structure.pack(
+            self.permanent,
+            self.enabled,
+            self.baud_rate,
+            self.can_protocol.value,
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

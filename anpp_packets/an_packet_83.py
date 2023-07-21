@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import pack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,15 +36,18 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class ZeroAngularVelocityPacket:
     """Packet 83 - Zero Angular Velocity Packet"""
+
     duration: float = 0
 
     ID = PacketID.zero_angular_velocity
     LENGTH = 8
 
-    def encode(self):
+    _structure = struct.Struct("<f4x")
+
+    def encode(self) -> ANPacket:
         """Encode Zero Angular Velocity Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<fI', self.duration, 0)
+        data = self._structure.pack(self.duration)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

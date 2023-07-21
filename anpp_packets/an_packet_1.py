@@ -39,11 +39,12 @@ from anpp_packets.an_packets import PacketID
 @dataclass()
 class RequestPacket:
     """Packet 1 - Request Packet"""
-    requested_packets: [PacketID] = field(default_factory=list)
+
+    requested_packets: List[PacketID] = field(default_factory=list, repr=False)
 
     ID = PacketID.request
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Request Packet to ANPacket
         Returns the ANPacket"""
         if not isinstance(self.requested_packets, list):
@@ -51,7 +52,7 @@ class RequestPacket:
 
         data = bytes()
         for packet in self.requested_packets:
-            data += pack('<B', PacketID(packet).value)
+            data += pack("<B", PacketID(packet).value)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, len(data), data)

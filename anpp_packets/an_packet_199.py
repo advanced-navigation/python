@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import pack, unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,27 +36,33 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class GPIOInputConfigurationPacket:
     """Packet 199 - GPIO Input Configuration Packet"""
+
     permanent: int = 0
     gimbal_radians_per_encoder_tick: float = 0
 
     ID = PacketID.gpio_input_configuration
     LENGTH = 65
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<Bf60x")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to GPIO Input Configuration Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.permanent = an_packet.data[0]
-            self.gimbal_radians_per_encoder_tick = unpack('<f', an_packet.data[1:5])[0]
+            (
+                self.permanent,
+                self.gimbal_radians_per_encoder_tick,
+            ) = self._structure.unpack(an_packet.data)
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode GPIO Input Configuration Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<B', self.permanent)
-        data += pack('<f', self.gimbal_radians_per_encoder_tick)
+        data = self._structure.pack(
+            self.permanent, self.gimbal_radians_per_encoder_tick
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

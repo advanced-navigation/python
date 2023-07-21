@@ -28,7 +28,8 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import pack, unpack
+import struct
+from typing import List
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -42,13 +43,17 @@ class PacketPeriod:
 
     LENGTH = 5
 
+    _structure = struct.Struct("<BI")
+
     def unpack(self, data):
         """Unpack data bytes"""
-        self.packet_id = data[0]
-        self.period = unpack("<I", data[1:5])[0]
+        (
+            self.packet_id,
+            self.period,
+        ) = self._structure.unpack_from(data)
 
     def pack(self):
-        return pack("<BI", self.packet_id, self.period)
+        return self._structure.pack(self.packet_id, self.period)
 
 
 @dataclass()
@@ -57,13 +62,15 @@ class PacketsPeriodPacket:
 
     permanent: int = 0
     clear_existing_packets: int = 0
-    packet_periods: [PacketPeriod] = field(default_factory=list)
+    packet_periods: List[PacketPeriod] = field(default_factory=list, repr=False)
 
     ID = PacketID.packets_period
     MINIMUM_LENGTH = 2
     MAXIMUM_PACKET_PERIODS = 50
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("BB")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Packets Period Packet
         Returns 0 on success and 1 on failure"""
         if (
@@ -76,25 +83,26 @@ class PacketsPeriodPacket:
         )
         self.permanent = an_packet.data[0]
         self.clear_existing_packets = an_packet.data[1]
+        self.packet_periods = [PacketPeriod()] * packet_periods_count
         for i in range(packet_periods_count):
-            index = 2 + i * PacketPeriod.LENGTH
-            self.packet_periods.append(PacketPeriod())
+            index = self.MINIMUM_LENGTH + i * PacketPeriod.LENGTH
             self.packet_periods[i].unpack(
                 an_packet.data[index : index + PacketPeriod.LENGTH]
             )
         return 0
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Packets Period Packet to ANPacket
         Returns the ANPacket"""
-        data = pack("<B", self.permanent)
-        data += pack("<B", self.clear_existing_packets)
+        data = self._structure.pack(self.permanent, self.clear_existing_packets)
         for i in range(len(self.packet_periods)):
             data += self.packet_periods[i].pack()
 
         an_packet = ANPacket()
         an_packet.encode(
-            self.ID, (2 + PacketPeriod.LENGTH * len(self.packet_periods)), data
+            self.ID,
+            (self.MINIMUM_LENGTH + PacketPeriod.LENGTH * len(self.packet_periods)),
+            data,
         )
 
         return an_packet

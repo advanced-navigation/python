@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import pack, unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class NorthSeekingInitialisationStatusFlags:
     """North Seeking Initialisation Status Flags"""
+
     north_seeking_initialised: bool = False
     position_not_ready: bool = False
     excessive_roll: bool = False
@@ -57,20 +58,25 @@ class NorthSeekingInitialisationStatusFlags:
         self.latitude_check_failed = (data & (1 << 7)) != 0
 
     def pack(self):
-        return (self.north_seeking_initialised << 0) \
-               & (self.position_not_ready << 1) \
-               & (self.excessive_roll << 2) \
-               & (self.excessive_pitch << 3) \
-               & (self.excessive_movement << 4) \
-               & (self.latitude_change << 5) \
-               & (self.lever_arm_offset_change << 6) \
-               & (self.latitude_check_failed << 7)
+        return (
+            (self.north_seeking_initialised << 0)
+            & (self.position_not_ready << 1)
+            & (self.excessive_roll << 2)
+            & (self.excessive_pitch << 3)
+            & (self.excessive_movement << 4)
+            & (self.latitude_change << 5)
+            & (self.lever_arm_offset_change << 6)
+            & (self.latitude_check_failed << 7)
+        )
 
 
 @dataclass()
 class NorthSeekingInitialisationStatusPacket:
     """Packet 71 - North Seeking Initialisation Status Packet"""
-    flags: NorthSeekingInitialisationStatusFlags = NorthSeekingInitialisationStatusFlags()
+
+    flags: NorthSeekingInitialisationStatusFlags = (
+        NorthSeekingInitialisationStatusFlags()
+    )
     version: int = 0
     progress: int = 0
     alignment_attempts: int = 0
@@ -80,22 +86,36 @@ class NorthSeekingInitialisationStatusPacket:
     ID = PacketID.north_seeking_initialisation_status
     LENGTH = 28
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<HHBBxxff12x")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to North Seeking Initialisation Status Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.flags.unpack(unpack('<H', bytes(an_packet.data[0:2]))[0])
-            self.version = unpack('<H', bytes(an_packet.data[2:4]))[0]
-            self.progress = unpack('<B', bytes(an_packet.data[4]))[0]
-            self.alignment_attempts = an_packet.data[5]
-            self.coarse_alignment_heading = unpack('<f', bytes(an_packet.data[8:12]))[0]
-            self.predicted_accuracy = unpack('<f', bytes(an_packet.data[12:16]))[0]
+            (
+                flags_value,
+                self.version,
+                self.progress,
+                self.alignment_attempts,
+                self.coarse_alignment_heading,
+                self.predicted_accuracy,
+            ) = self._structure.unpack_from(an_packet.data)
+            self.flags.unpack(flags_value)
+            return 0
+        else:
+            return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode North Seeking Initialisation Status Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<HHBBB', self.flags.pack(), self.version, self.progress, self.alignment_attempts, 0)
-        data += pack('<ff', self.coarse_alignment_heading, self.predicted_accuracy)
+        data = self._structure.pack(
+            self.flags.pack(),
+            self.version,
+            self.progress,
+            self.alignment_attempts,
+            self.coarse_alignment_heading,
+            self.predicted_accuracy,
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

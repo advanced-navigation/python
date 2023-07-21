@@ -29,19 +29,22 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from struct import pack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
+from typing import List
 
 
 class DataEncoding(Enum):
     """Data Encoding"""
+
     binary = 0
     aes256 = 1
 
 
 class FileTransferMetadata(Enum):
     """File Transfer Metadata"""
+
     none = 0
     extended_anpp = 1
     utf8_filename = 2
@@ -51,21 +54,29 @@ class FileTransferMetadata(Enum):
 @dataclass()
 class FileTransferFirstPacket:
     """Packet 7 - File Transfer Request Packet"""
+
     unique_id: int = 0
     data_index: int = 0
     total_size: int = 0
     data_encoding: DataEncoding = DataEncoding.binary
     metadata_type: FileTransferMetadata = FileTransferMetadata.none
-    metadata: [bytes] = field(default_factory=list)
-    packet_data: [bytes] = field(default_factory=list)
+    metadata: bytes = field(default_factory=bytes, repr=False)
+    packet_data: bytes = field(default_factory=bytes, repr=False)
 
     ID = PacketID.file_transfer_request
 
-    def encode(self):
+    _structure = struct.Struct("<IIIBB")
+
+    def encode(self) -> ANPacket:
         """Encode File Transfer Request Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<III', self.unique_id, self.data_index, self.total_size)
-        data += pack('<BB', self.data_encoding.value, self.metadata_type.value)
+        data = self._structure.pack(
+            self.unique_id,
+            self.data_index,
+            self.total_size,
+            self.data_encoding.value,
+            self.metadata_type.value,
+        )
         data += self.metadata
         data += self.packet_data
 

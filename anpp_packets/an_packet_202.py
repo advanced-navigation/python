@@ -29,7 +29,8 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from struct import pack, unpack
+from struct import pack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -53,14 +54,15 @@ class IPDataportConfiguration:
 
     LENGTH = 7
 
+    _structure = struct.Struct("<IHB")
+
     def unpack(self, data):
         """Unpack data bytes"""
-        self.ip_address = unpack("<I", data[:4])[0]
-        self.port = unpack("<H", data[4:6])[0]
-        self.mode = IPDataportMode(data[6])
+        (self.ip_address, self.port, mode_value) = self._structure.unpack_from(data)
+        self.mode = IPDataportMode(mode_value)
 
-    def pack(self):
-        return pack("<IHB", self.ip_address, self.port, self.mode.value)
+    def pack(self) -> bytes:
+        return self._structure.pack(self.ip_address, self.port, self.mode.value)
 
 
 @dataclass()
@@ -74,7 +76,7 @@ class IPDataportConfigurationPacket:
     ID = PacketID.ip_dataports_configuration
     LENGTH = 30
 
-    def decode(self, an_packet: ANPacket):
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to IP Dataport Configuration Packet
         Returns 0 on success and 1 on failure"""
         if an_packet.id != self.ID or len(an_packet.data) != self.LENGTH:
@@ -87,7 +89,7 @@ class IPDataportConfigurationPacket:
             )
         return 0
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode IP Dataport Configuration Packet to ANPacket
         Returns the ANPacket"""
         data = pack("<H", 0)

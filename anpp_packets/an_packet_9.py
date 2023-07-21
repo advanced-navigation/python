@@ -27,8 +27,8 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass
-from struct import pack
+from dataclasses import dataclass, field
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,16 +36,19 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class FileTransferOngoingPacket:
     """Packet 9 - File Transfer Ongoing Packet"""
+
     unique_id: int = 0
     data_index: int = 0
-    packet_data: int = 0
+    packet_data: bytes = field(default_factory=bytes, repr=False)
 
     ID = PacketID.file_transfer
 
-    def encode(self):
+    _structure = struct.Struct("<II")
+
+    def encode(self) -> ANPacket:
         """Encode File Transfer Ongoing Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<II', self.unique_id, self.data_index)
+        data = self._structure.pack(self.unique_id, self.data_index)
         data += self.packet_data
 
         an_packet = ANPacket()

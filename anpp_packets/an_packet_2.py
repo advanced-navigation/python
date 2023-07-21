@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 
 class BootMode(Enum):
     """Boot Mode Types"""
+
     bootloader = 0
     main_program = 1
 
@@ -43,12 +44,13 @@ class BootMode(Enum):
 @dataclass()
 class BootModePacket:
     """Packet 2 - Boot Mode Packet"""
+
     boot_mode: BootMode = BootMode.bootloader
 
     ID = PacketID.boot_mode
     LENGTH = 1
 
-    def decode(self, an_packet: ANPacket):
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Boot Mode Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
@@ -57,10 +59,10 @@ class BootModePacket:
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Boot Mode Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<B', self.boot_mode.value)
+        data = pack("<B", self.boot_mode.value)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

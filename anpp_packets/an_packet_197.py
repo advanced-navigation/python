@@ -29,7 +29,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from struct import pack, unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -202,40 +202,51 @@ class GNSSConfigurationPacket:
     ID = PacketID.gnss_configuration
     LENGTH = 85
 
+    _structure_aries = struct.Struct("<BQ76x")
+    _structure_trimble = struct.Struct("<BQffBBBBIIIIB47x")
+
     def decode(self, an_packet: ANPacket):
         """Decode ANPacket to GNSS Configuration Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.permanent = an_packet.data[0]
-            self.gnss_frequencies.unpack(unpack("<Q", an_packet.data[1:9])[0])
-            self.pdop = unpack("<f", an_packet.data[9:13])[0]
-            self.tfop = unpack("<f", an_packet.data[13:17])[0]
-            self.elevation_mask = an_packet.data[17]
-            self.snr_mask = an_packet.data[18]
-            self.sbas_corrections_enabled = an_packet.data[19]
-            self.lband_mode = LBandMode(an_packet.data[20])
-            self.lband_frequency = unpack("<I", an_packet.data[21:25])[0]
-            self.lband_baud = unpack("<I", an_packet.data[25:29])[0]
-            self.primary_antenna_type = unpack("<I", an_packet.data[29:33])[0]
-            self.secondary_antenna_type = unpack("<I", an_packet.data[33:37])[0]
-            self.lband_satellite_id = LBandSatelliteID(an_packet.data[37])
+            (
+                self.permanent,
+                gnss_frequencies_value,
+                self.pdop,
+                self.tfop,
+                self.elevation_mask,
+                self.snr_mask,
+                self.sbas_corrections_enabled,
+                lband_mode_value,
+                self.lband_frequency,
+                self.lband_baud,
+                self.primary_antenna_type,
+                self.secondary_antenna_type,
+                lband_satellite_id_value,
+            ) = self._structure_trimble.unpack_from(an_packet.data)
+
+            self.gnss_frequencies.unpack(gnss_frequencies_value)
+            self.lband_mode = LBandMode(lband_mode_value)
+            self.lband_satellite_id = LBandSatelliteID(lband_satellite_id_value)
 
     def encode(self):
         """Encode GNSS Configuration Packet to ANPacket
         Returns the ANPacket"""
-        data = pack("<B", self.permanent)
-        data += pack("<Q", self.gnss_frequencies.pack())
-        data += pack("<ff", self.pdop, self.tfop)
-        data += pack(
-            "<BBBB",
-            self.elevation_mask,
-            self.snr_mask,
-            self.sbas_corrections_enabled,
-            self.lband_mode.value,
-        )
-        data += pack("<II", self.lband_frequency, self.lband_baud)
-        data += pack("<II", self.primary_antenna_type, self.secondary_antenna_type)
-        data += pack("B", self.lband_satellite_id.value)
+        data = self._structure_trimble.pack(
+                self.permanent,
+                self.gnss_frequencies.pack(),
+                self.pdop,
+                self.tfop,
+                self.elevation_mask,
+                self.snr_mask,
+                self.sbas_corrections_enabled,
+                self.lband_mode.value,
+                self.lband_frequency,
+                self.lband_baud,
+                self.primary_antenna_type,
+                self.secondary_antenna_type,
+                self.lband_satellite_id.value,
+            )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

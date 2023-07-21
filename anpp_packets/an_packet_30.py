@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,6 +36,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class SatellitesPacket:
     """Packet 30 - Satellites Packet"""
+
     hdop: float = 0
     vdop: float = 0
     gps_satellites: int = 0
@@ -47,17 +48,21 @@ class SatellitesPacket:
     ID = PacketID.satellites
     LENGTH = 13
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<ffBBBBB")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Satellites Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.hdop = unpack('<f', bytes(an_packet.data[0:4]))[0]
-            self.vdop = unpack('<f', bytes(an_packet.data[4:8]))[0]
-            self.gps_satellites = an_packet.data[8]
-            self.glonass_satellites = an_packet.data[9]
-            self.beidou_satellites = an_packet.data[10]
-            self.galileo_satellites = an_packet.data[11]
-            self.sbas_satellites = an_packet.data[12]
+            (
+                self.hdop,
+                self.vdop,
+                self.gps_satellites,
+                self.glonass_satellites,
+                self.beidou_satellites,
+                self.galileo_satellites,
+                self.sbas_satellites,
+            ) = self._structure.unpack_from(an_packet.data)
             return 0
         else:
             return 1

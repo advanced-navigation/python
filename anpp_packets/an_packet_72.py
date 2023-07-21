@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import pack, unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,24 +36,27 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class GimbalStatePacket:
     """Packet 72 - Gimbal State Packet"""
+
     current_angle: float = 0
 
     ID = PacketID.gimbal_state
     LENGTH = 8
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<f4x")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Gimbal State Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.current_angle = unpack('<f', bytes(an_packet.data[0:4]))[0]
+            self.current_angle = self._structure.unpack_from(an_packet.data)[0]
             return 0
         else:
             return 1
 
-    def encode(self):
+    def encode(self) -> ANPacket:
         """Encode Gimbal State Packet to ANPacket
         Returns the ANPacket"""
-        data = pack('<fI', self.current_angle, 0)
+        data = self._structure.pack(self.current_angle)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

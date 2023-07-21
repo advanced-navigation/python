@@ -29,7 +29,8 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from struct import unpack
+from typing import List
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 from anpp_packets.an_packet_31 import SatelliteSystem
@@ -38,6 +39,7 @@ from anpp_packets.an_packet_31 import SatelliteSystem
 @dataclass()
 class TrackingStatus:
     """Tracking Status"""
+
     carrier_phase_valid: bool = False
     carrier_phase_cycle_slip_detected: bool = False
     carrier_phase_half_cycle_ambiguity: bool = False
@@ -57,6 +59,7 @@ class TrackingStatus:
 
 class GPSSatelliteFrequency(Enum):
     """GPS Satellite Frequency"""
+
     unknown = 0
     l1_ca = 1
     l1_c = 2
@@ -70,6 +73,7 @@ class GPSSatelliteFrequency(Enum):
 
 class GLONASSSatelliteFrequency(Enum):
     """GLONASS Satellite Frequency"""
+
     unknown = 0
     g1_ca = 1
     g1_p = 3
@@ -80,6 +84,7 @@ class GLONASSSatelliteFrequency(Enum):
 
 class GalileoSatelliteFrequency(Enum):
     """Galileo Satellite Frequency"""
+
     unknown = 0
     e1_os = 1
     e1_prs = 2
@@ -92,6 +97,7 @@ class GalileoSatelliteFrequency(Enum):
 
 class BeiDouSatelliteFrequency(Enum):
     """BeiDou Satellite Frequency"""
+
     unknown = 0
     b1 = 1
     b2 = 5
@@ -100,6 +106,7 @@ class BeiDouSatelliteFrequency(Enum):
 
 class SBASSatelliteFrequency(Enum):
     """SBAS Satellite Frequency"""
+
     unknown = 0
     l1_ca = 1
     l5 = 8
@@ -107,6 +114,7 @@ class SBASSatelliteFrequency(Enum):
 
 class QZSSSatelliteFrequency(Enum):
     """QZSS Satellite Frequency"""
+
     unknown = 0
     l1_ca = 1
     l1_c = 2
@@ -119,53 +127,75 @@ class QZSSSatelliteFrequency(Enum):
 @dataclass()
 class FrequencyInformation:
     """Frequency Information"""
-    satellite_frequency: int = GPSSatelliteFrequency.unknown
+
+    satellite_frequency: int = GPSSatelliteFrequency.unknown.value
     tracking_status: TrackingStatus = TrackingStatus()
-    carrier_phase: int = 0
-    pseudo_range: int = 0
-    doppler_frequency: int = 0
-    snr: int = 0
+    carrier_phase: float = 0
+    pseudo_range: float = 0
+    doppler_frequency: float = 0
+    snr: float = 0
 
     LENGTH = 26
 
+    _structure = struct.Struct("<BBddff")
+
     def unpack(self, data):
         """Unpack data bytes"""
-        self.satellite_frequency = data[0]
-        self.tracking_status.unpack(data[1])
-        self.carrier_phase = unpack('<d', bytes(data[2:10]))[0]
-        self.pseudo_range = unpack('<d', bytes(data[10:18]))[0]
-        self.doppler_frequency = unpack('<f', bytes(data[18:22]))[0]
-        self.snr = unpack('<f', bytes(data[22:26]))[0]
- 
+        (
+            self.satellite_frequency,
+            tracking_status_value,
+            self.carrier_phase,
+            self.pseudo_range,
+            self.doppler_frequency,
+            self.snr,
+        ) = self._structure.unpack_from(data)
+
+        self.tracking_status.unpack(tracking_status_value)
+
 
 @dataclass()
 class SatelliteData:
     """Satellite Data"""
+
     satellite_system: SatelliteSystem = SatelliteSystem.unknown
     prn_satellite_number: int = 0
     elevation: int = 0
     azimuth: int = 0
     number_of_frequencies: int = 0
-    frequency_information: [FrequencyInformation] = field(default_factory=list)
+    frequency_information: List[FrequencyInformation] = field(
+        default_factory=list, repr=False
+    )
 
     MINIMUM_LENGTH = 6
 
+    _structure = struct.Struct("<BBBHB")
+
     def unpack(self, data):
         """Unpack data bytes"""
-        self.satellite_system = SatelliteSystem(data[0])
-        self.prn_satellite_number = data[1]
-        self.elevation = data[2]
-        self.azimuth = unpack('<H', bytes(data[3:5]))[0]
-        self.number_of_frequencies = data[5]
-        self.frequency_information = [FrequencyInformation()] * self.number_of_frequencies
+        (
+            satellite_system_value,
+            self.prn_satellite_number,
+            self.elevation,
+            self.azimuth,
+            self.number_of_frequencies,
+        ) = self._structure.unpack_from(data)
+
+        self.satellite_system = SatelliteSystem(satellite_system_value)
+
+        self.frequency_information = [
+            FrequencyInformation()
+        ] * self.number_of_frequencies
         for i in range(self.number_of_frequencies):
             index = 6 + i * FrequencyInformation.LENGTH
-            self.frequency_information[i].unpack(data[index:index+FrequencyInformation.LENGTH])
+            self.frequency_information[i].unpack(
+                data[index : index + FrequencyInformation.LENGTH]
+            )
 
 
 @dataclass()
 class RawSatelliteDataPacket:
     """Packet 60 - Raw Satellite Data Packet"""
+
     unix_time: int = 0
     nanoseconds: int = 0
     receiver_clock_offset: int = 0
@@ -173,29 +203,41 @@ class RawSatelliteDataPacket:
     packet_number: int = 0
     total_packets: int = 0
     number_of_satellites: int = 0
-    satellite_data: [SatelliteData] = field(default_factory=list)
+    satellite_data: List[SatelliteData] = field(default_factory=list, repr=False)
 
     ID = PacketID.raw_satellite_data
+
+    HEAD_LENGTH = 16
+
+    _structure = struct.Struct("<IIiBBBB")
 
     def decode(self, an_packet: ANPacket):
         """Decode ANPacket to Raw Satellite Data Packet
         Returns 0 on success and 1 on failure"""
         if an_packet.id == self.ID:
-            self.unix_time = unpack('<I', bytes(an_packet.data[0:4]))[0]
-            self.nanoseconds = unpack('<I', bytes(an_packet.data[4:8]))[0]
-            self.receiver_clock_offset = unpack('<i', bytes(an_packet.data[8:12]))[0]
-            self.receiver_number = an_packet.data[12]
-            self.packet_number = an_packet.data[13]
-            self.total_packets = an_packet.data[14]
-            self.number_of_satellites = an_packet.data[15]
+            (
+                self.unix_time,
+                self.nanoseconds,
+                self.receiver_clock_offset,
+                self.receiver_number,
+                self.packet_number,
+                self.total_packets,
+                self.number_of_satellites,
+            ) = self._structure.unpack_from(an_packet.data)
+
             self.satellite_data = [SatelliteData()] * self.number_of_satellites
 
             number_of_previous_frequencies = 0
             for i in range(self.number_of_satellites):
-                index = 16 + i * SatelliteData.MINIMUM_LENGTH \
-                        + number_of_previous_frequencies * FrequencyInformation.LENGTH
+                index = (
+                    self.HEAD_LENGTH
+                    + i * SatelliteData.MINIMUM_LENGTH
+                    + number_of_previous_frequencies * FrequencyInformation.LENGTH
+                )
                 self.satellite_data[i].unpack(an_packet.data[index:])
-                number_of_previous_frequencies = self.satellite_data[i].number_of_frequencies
+                number_of_previous_frequencies = self.satellite_data[
+                    i
+                ].number_of_frequencies
             return 0
         else:
             return 1

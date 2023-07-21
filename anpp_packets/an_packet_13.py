@@ -29,7 +29,8 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from struct import unpack
+from typing import List
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 from anpp_packets.an_packet_3 import DeviceID
@@ -37,6 +38,7 @@ from anpp_packets.an_packet_3 import DeviceID
 
 class CertusDeviceSubtype(Enum):
     """Certus Device Subtype"""
+
     certus = 0
     certus_evo = 1
     certus_oem = 2
@@ -46,24 +48,28 @@ class CertusDeviceSubtype(Enum):
 @dataclass()
 class ExtendedDeviceInformationPacket:
     """Packet 13 - Extended Device Information Packet"""
+
     software_version: int = 0
     device_id: DeviceID = DeviceID.unknown
     hardware_revision: int = 0
-    serial_number: [int] * 3 = field(default_factory=list)
+    serial_number: List[int] = field(default_factory=lambda: [0, 0, 0], repr=False)
     device_subtype: int = 0
 
     ID = PacketID.extended_device_information
     LENGTH = 36
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<IIIIIII8x")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Extended Device Information Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.software_version = unpack('<I', an_packet.data[0:4])[0]
-            self.device_id = DeviceID(unpack('<I', an_packet.data[4:8])[0])
-            self.hardware_revision = unpack('<I', an_packet.data[8:12])[0]
-            self.serial_number = unpack('<III', an_packet.data[12:24])
-            self.device_subtype = unpack('<I', an_packet.data[24:28])[0]
+            values = self._structure.unpack_from(an_packet.data)
+            self.software_version = values[0]
+            self.device_id = values[1]
+            self.hardware_revision = values[2]
+            self.serial_number = list(values[3:7])
+            self.device_subtype = values[7]
             return 0
         else:
             return 1

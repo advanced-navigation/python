@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import pack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,16 +36,19 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class SetZeroOrientationAlignmentPacket:
     """Packet 193 - Set Zero Orientation Alignment Packet"""
+
     permanent: int = 0
 
     ID = PacketID.set_zero_orientation_alignment
     LENGTH = 5
 
-    def encode(self):
+    _structure = struct.Struct("<BI")
+
+    def encode(self) -> ANPacket:
         """Encode Set Zero Orientation Alignment Packet to ANPacket
         Returns the ANPacket"""
         verification = 0x9A4E8055
-        data = pack('<BI', self.permanent, verification)
+        data = self._structure.pack(self.permanent, verification)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from struct import unpack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -36,16 +36,19 @@ from anpp_packets.an_packet_protocol import ANPacket
 @dataclass()
 class GeoidHeightPacket:
     """Packet 54 - Geoid Height Packet"""
+
     geoid_height: float = 0
 
     ID = PacketID.geoid_height
     LENGTH = 4
 
-    def decode(self, an_packet: ANPacket):
+    _structure = struct.Struct("<f")
+
+    def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Geoid Height Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.geoid_height = unpack('<f', bytes(an_packet.data[0:4]))[0]
+            self.geoid_height = self._structure.unpack_from(an_packet.data)[0]
             return 0
         else:
             return 1
