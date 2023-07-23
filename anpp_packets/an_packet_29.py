@@ -132,7 +132,7 @@ class RawGNSSPacket:
             self.heading,
             self.tilt_standard_deviation,
             self.heading_standard_deviation,
-            self.flags
+            self.flags.value
         )
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

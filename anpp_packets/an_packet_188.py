@@ -236,7 +236,7 @@ class GPIOConfigurationPacket:
             self.gpio2_function.value,
             self.auxTx_function.value,
             self.auxRx_function.value,
-            self.gpio_voltage_selection,
+            self.gpio_voltage_selection.value,
         )
 
         an_packet = ANPacket()

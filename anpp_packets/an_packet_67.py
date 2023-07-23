@@ -84,7 +84,7 @@ class ExternalOdometerPacket:
             self.estimated_delay,
             self.speed,
             self.distance_travelled,
-            self.flags.pack,
+            self.flags.pack(),
         )
 
         an_packet = ANPacket()

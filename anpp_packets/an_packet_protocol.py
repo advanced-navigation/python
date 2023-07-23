@@ -30,6 +30,7 @@ from dataclasses import dataclass, field
 from typing import Final
 from array import array
 from struct import pack
+import struct
 
 from anpp_packets.an_packets import PacketID
 
@@ -108,10 +109,12 @@ class ANPacket:
 
     id: PacketID = PacketID.acceleration
     length: int = 0
-    header: bytearray = field(default_factory=bytearray)
-    data: bytearray = field(default_factory=bytearray)
+    header: bytes = field(default_factory=bytes)
+    data: bytes = field(default_factory=bytes)
 
-    def encode(self, id_: PacketID, length_: int, data_: bytearray):
+    _structure = struct.Struct("<BBBBB")
+
+    def encode(self, id_: PacketID, length_: int, data_: bytes):
         """Assign attribute values and calculate header"""
         self.id = id_
         self.length = length_ & 0xFF
@@ -120,8 +123,8 @@ class ANPacket:
         crc = pack("<H", calculate_crc16(self.data))
         lrc = calculate_header_lrc(bytes([self.id.value, self.length, crc[0], crc[1]]))
 
-        self.header = bytearray(
-            pack("<BBBBB", lrc, self.id.value, self.length, crc[0], crc[1])
+        self.header = self._structure.pack(
+            lrc, self.id.value, self.length, crc[0], crc[1]
         )
 
     def bytes(self):
@@ -166,10 +169,8 @@ def an_packet_decode(an_decoder: ANDecoder):
                 an_packet = ANPacket()
                 an_packet.id = int(header_data[0])
                 an_packet.length = length
-                an_packet.header = bytearray(
-                    an_decoder.buffer[decode_iterator:data_start]
-                )
-                an_packet.data = bytearray(an_decoder.buffer[data_start:data_end])
+                an_packet.header = bytes(an_decoder.buffer[decode_iterator:data_start])
+                an_packet.data = bytes(an_decoder.buffer[data_start:data_end])
 
                 decode_iterator += AN_PACKET_HEADER_SIZE + an_packet.length
                 decoder_data.buffer = an_decoder.buffer[decode_iterator:]

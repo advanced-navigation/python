@@ -244,7 +244,7 @@ class GPIOOutputConfigurationPacket:
         else:
             data = self._structure_v1.pack(
                 self.permanent,
-                self.gpio_1.nmea_fix_behaviour,
+                self.gpio_1.nmea_fix_behaviour.value,
                 self.gpio_1.gpzda_rate.value | (self.gpio_3.gpzda_rate.value << 4),
                 self.gpio_1.gpgga_rate.value | (self.gpio_3.gpgga_rate.value << 4),
                 self.gpio_1.gpvtg_rate.value | (self.gpio_3.gpvtg_rate.value << 4),

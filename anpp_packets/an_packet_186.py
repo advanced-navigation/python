@@ -97,7 +97,7 @@ class FilterOptionsPacket:
         Returns the ANPacket"""
         data = self._structure.pack(
             self.permanent,
-            self.vehicle_type,
+            self.vehicle_type.value,
             self.internal_gnss_enabled,
             self.magnetometers_enabled,
             self.atmospheric_altitude_enabled,

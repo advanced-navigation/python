@@ -55,7 +55,7 @@ class ReferencePointOffsetsPacket:
     ID = PacketID.reference_point_offsets
     LENGTH = 49
 
-    _structure = struct.Struct("<B18f")
+    _structure = struct.Struct("<B12f")
 
     def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Reference Point Offsets Packet
