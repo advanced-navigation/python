@@ -83,7 +83,6 @@ class IPDataportConfigurationPacket:
             return 1
         for i in range(4):
             index = 2 + i * IPDataportConfiguration.LENGTH
-            self.ip_dataport_configuration.append(IPDataportConfiguration())
             self.ip_dataport_configuration[i].unpack(
                 an_packet.data[index : index + IPDataportConfiguration.LENGTH]
             )

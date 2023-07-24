@@ -38,7 +38,7 @@ from anpp_packets.an_packet_protocol import ANPacket
 class UserDataPacket:
     """Packet 198 - User Data Packet"""
 
-    user_data: bytes = field(default_factory=bytes, repr=False)
+    user_data: bytes = field(default_factory=lambda: bytes(64), repr=False)
 
     ID = PacketID.user_data
     LENGTH = 64

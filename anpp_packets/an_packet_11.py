@@ -81,7 +81,7 @@ class IPConfigurationPacket:
     ID = PacketID.ip_configuration
     LENGTH = 30
 
-    _structure = struct.Struct("<BBHHHHHHH")
+    _structure = struct.Struct("<BBIIIIIII")
 
     def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to IP Configuration Packet

@@ -228,25 +228,27 @@ class GNSSConfigurationPacket:
             self.gnss_frequencies.unpack(gnss_frequencies_value)
             self.lband_mode = LBandMode(lband_mode_value)
             self.lband_satellite_id = LBandSatelliteID(lband_satellite_id_value)
+            return 0
+        return 1
 
     def encode(self):
         """Encode GNSS Configuration Packet to ANPacket
         Returns the ANPacket"""
         data = self._structure_trimble.pack(
-                self.permanent,
-                self.gnss_frequencies.pack(),
-                self.pdop,
-                self.tfop,
-                self.elevation_mask,
-                self.snr_mask,
-                self.sbas_corrections_enabled,
-                self.lband_mode.value,
-                self.lband_frequency,
-                self.lband_baud,
-                self.primary_antenna_type,
-                self.secondary_antenna_type,
-                self.lband_satellite_id.value,
-            )
+            self.permanent,
+            self.gnss_frequencies.pack(),
+            self.pdop,
+            self.tfop,
+            self.elevation_mask,
+            self.snr_mask,
+            self.sbas_corrections_enabled,
+            self.lband_mode.value,
+            self.lband_frequency,
+            self.lband_baud,
+            self.primary_antenna_type,
+            self.secondary_antenna_type,
+            self.lband_satellite_id.value,
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)
