@@ -51,12 +51,16 @@ class ExtendedSatellite:
 
     satellite_system: int = 0
     number: int = 0
-    frequencies: SatelliteFrequencies = SatelliteFrequencies()
+    frequencies: SatelliteFrequencies = field(
+        default_factory=SatelliteFrequencies, repr=False
+    )
     elevation: int = 0
     azimuth: int = 0
     snr1: int = 0
     snr2: int = 0
-    flags: ExtendedSatelliteFlags = ExtendedSatelliteFlags()
+    flags: ExtendedSatelliteFlags = field(
+        default_factory=ExtendedSatelliteFlags, repr=False
+    )
 
     LENGTH = 9
 

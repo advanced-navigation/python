@@ -157,11 +157,11 @@ class TrimbleGNSSReceiverInformation:
 class GNSSReceiverInformationPacket:
     """Packet 69 - GNSS Receiver Information Packet"""
 
-    advanced_navigation_gnss_receiver_information: AdvancedNavigationGNSSReceiverInformation = (
-        AdvancedNavigationGNSSReceiverInformation()
+    advanced_navigation_gnss_receiver_information: AdvancedNavigationGNSSReceiverInformation = field(
+        default_factory=AdvancedNavigationGNSSReceiverInformation, repr=False
     )
-    trimble_gnss_receiver_information: TrimbleGNSSReceiverInformation = (
-        TrimbleGNSSReceiverInformation()
+    trimble_gnss_receiver_information: TrimbleGNSSReceiverInformation = field(
+        default_factory=TrimbleGNSSReceiverInformation, repr=False
     )
 
     ID = PacketID.gnss_receiver_information

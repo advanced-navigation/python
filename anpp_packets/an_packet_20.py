@@ -130,8 +130,8 @@ class FilterStatus:
 class SystemStatePacket:
     """Packet 20 - System State Packet"""
 
-    system_status: SystemStatus = SystemStatus()
-    filter_status: FilterStatus = FilterStatus()
+    system_status: SystemStatus = field(default_factory=SystemStatus, repr=False)
+    filter_status: FilterStatus = field(default_factory=FilterStatus, repr=False)
     unix_time_seconds: int = 0
     microseconds: int = 0
     latitude: float = 0

@@ -98,7 +98,9 @@ class RawSensorsPacketAdu:
 
     absolute_pressure: float = 0
     differential_pressure: float = 0
-    raw_sensors_status: RawSensorStatusAdu = RawSensorStatusAdu()
+    raw_sensors_status: RawSensorStatusAdu = field(
+        default_factory=RawSensorStatusAdu, repr=False
+    )
     temperature: float = 0
 
     ID = PacketID.raw_sensors

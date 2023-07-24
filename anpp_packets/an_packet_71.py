@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
@@ -74,8 +74,8 @@ class NorthSeekingInitialisationStatusFlags:
 class NorthSeekingInitialisationStatusPacket:
     """Packet 71 - North Seeking Initialisation Status Packet"""
 
-    flags: NorthSeekingInitialisationStatusFlags = (
-        NorthSeekingInitialisationStatusFlags()
+    flags: NorthSeekingInitialisationStatusFlags = field(
+        default_factory=NorthSeekingInitialisationStatusFlags, repr=False
     )
     version: int = 0
     progress: int = 0

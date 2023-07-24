@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
@@ -38,8 +38,8 @@ from anpp_packets.an_packet_20 import SystemStatus, FilterStatus
 class StatusPacket:
     """Packet 23 - Status Packet"""
 
-    system_status: SystemStatus = SystemStatus()
-    filter_status: FilterStatus = FilterStatus()
+    system_status: SystemStatus = field(default_factory=SystemStatus, repr=False)
+    filter_status: FilterStatus = field(default_factory=FilterStatus, repr=False)
 
     ID = PacketID.status
     LENGTH = 4

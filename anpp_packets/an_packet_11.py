@@ -71,7 +71,7 @@ class IPConfigurationPacket:
     """Packet 11 - IP Configuration Packet"""
 
     permanent: int = 0
-    dhcp_mode: DHCPMode = DHCPMode()
+    dhcp_mode: DHCPMode = field(default_factory=DHCPMode, repr=False)
     ip_address: int = 0
     ip_netmask: int = 0
     ip_gateway: int = 0

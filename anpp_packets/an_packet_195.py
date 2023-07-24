@@ -155,8 +155,8 @@ class GPIOOutputConfigurationPacket:
     """Packet 195 - GPIO Output Configuration Packet"""
 
     permanent: int = 0
-    gpio_1: GPIOPort = GPIOPort()
-    gpio_3: GPIOPort = GPIOPort()
+    gpio_1: GPIOPort = field(default_factory=GPIOPort, repr=False)
+    gpio_3: GPIOPort = field(default_factory=GPIOPort, repr=False)
     logging: GPIOPort | None = None
     data_ports: List[GPIOPort] | None = None
 

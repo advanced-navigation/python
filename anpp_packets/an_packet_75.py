@@ -55,7 +55,9 @@ class ExternalMagnetometersPacket:
 
     delay: float = 0
     magnetometer: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    flags: ExternalMagnetometersFlags = ExternalMagnetometersFlags()
+    flags: ExternalMagnetometersFlags = field(
+        default_factory=ExternalMagnetometersFlags, repr=False
+    )
 
     ID = PacketID.external_magnetometers
     LENGTH = 17

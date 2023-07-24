@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
@@ -66,7 +66,9 @@ class ExternalAirDataPacket:
     airspeed: float = 0
     barometric_altitude_standard_deviation: float = 0
     airspeed_standard_deviation: float = 0
-    flags: ExternalAirDataFlags = ExternalAirDataFlags()
+    flags: ExternalAirDataFlags = field(
+        default_factory=ExternalAirDataFlags, repr=False
+    )
 
     ID = PacketID.external_air_data
     LENGTH = 25
@@ -141,8 +143,7 @@ class AirDataPacket:
     airspeed: float = 0
     barometric_altitude_standard_deviation: float = 0
     airspeed_standard_deviation: float = 0
-    flags: AirDataFlags = AirDataFlags()
-
+    flags: AirDataFlags = field(default_factory=AirDataFlags, repr=False)
     ID = PacketID.external_air_data
     LENGTH = 25
 

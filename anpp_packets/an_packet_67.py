@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
@@ -54,7 +54,7 @@ class ExternalOdometerPacket:
     estimated_delay: float = 0
     speed: float = 0
     distance_travelled: float = 0  # Only valid for OBDII input
-    flags: OdometerFlags = OdometerFlags()
+    flags: OdometerFlags = field(default_factory=OdometerFlags, repr=False)
 
     ID = PacketID.external_odometer
     LENGTH = 13

@@ -79,7 +79,9 @@ class DetailedSatellite:
 
     satellite_system: SatelliteSystem = SatelliteSystem.unknown
     number: int = 0
-    frequencies: SatelliteFrequencies = SatelliteFrequencies()
+    frequencies: SatelliteFrequencies = field(
+        default_factory=SatelliteFrequencies, repr=False
+    )
     elevation: int = 0
     azimuth: int = 0
     snr: int = 0

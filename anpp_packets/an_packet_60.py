@@ -129,7 +129,7 @@ class FrequencyInformation:
     """Frequency Information"""
 
     satellite_frequency: int = GPSSatelliteFrequency.unknown.value
-    tracking_status: TrackingStatus = TrackingStatus()
+    tracking_status: TrackingStatus = field(default_factory=TrackingStatus, repr=False)
     carrier_phase: float = 0
     pseudo_range: float = 0
     doppler_frequency: float = 0

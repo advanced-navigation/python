@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import struct
 from anpp_packets.an_packets import PacketID
@@ -186,7 +186,9 @@ class GNSSConfigurationPacket:
     """Packet 197 - GNSS Configuration Packet"""
 
     permanent: int = 0
-    gnss_frequencies: GNSSFrequencies = GNSSFrequencies()
+    gnss_frequencies: GNSSFrequencies = field(
+        default_factory=GNSSFrequencies, repr=False
+    )
     pdop: float = 0
     tfop: float = 0
     elevation_mask: int = 0

@@ -90,7 +90,7 @@ class RawSatelliteGPSEphemerisPacket:
     ephemeris_week_number: int = 0
     transmission_time: int = 0
     user_range_accuracy: int = 0
-    flags: GPSFlags = GPSFlags()
+    flags: GPSFlags = field(default_factory=GPSFlags, repr=False)
 
     LENGTH = 132
 
@@ -245,9 +245,15 @@ class RawSatelliteGPSIonoEphemerisPacket:
 class RawSatelliteEphemerisPacket:
     """Packet 61 - Raw Satellite Ephemeris Packet"""
 
-    gps: RawSatelliteGPSEphemerisPacket = RawSatelliteGPSEphemerisPacket()
-    glonass: RawSatelliteGLONASSEphemerisPacket = RawSatelliteGLONASSEphemerisPacket()
-    gps_iono: RawSatelliteGPSIonoEphemerisPacket = RawSatelliteGPSIonoEphemerisPacket()
+    gps: RawSatelliteGPSEphemerisPacket = field(
+        default_factory=RawSatelliteGPSEphemerisPacket, repr=False
+    )
+    glonass: RawSatelliteGLONASSEphemerisPacket = field(
+        default_factory=RawSatelliteGLONASSEphemerisPacket, repr=False
+    )
+    gps_iono: RawSatelliteGPSIonoEphemerisPacket = field(
+        default_factory=RawSatelliteGPSIonoEphemerisPacket, repr=False
+    )
 
     ID = PacketID.raw_satellite_ephemeris
 

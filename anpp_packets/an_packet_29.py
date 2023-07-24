@@ -90,7 +90,7 @@ class RawGNSSPacket:
     """Only valid if an external dual antenna GNSS system is connected"""
     heading_standard_deviation: float = 0
     """Only valid if an external dual antenna GNSS system is connected"""
-    flags: RawGNSSFlags = RawGNSSFlags()
+    flags: RawGNSSFlags = field(default_factory=RawGNSSFlags, repr=False)
 
     ID = PacketID.raw_gnss
     LENGTH = 74

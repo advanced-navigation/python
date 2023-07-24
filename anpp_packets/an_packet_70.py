@@ -59,7 +59,7 @@ class RawDVLDataPacket:
 
     unix_time: int = 0
     microseconds: int = 0
-    status: RawDVLDataFlags = RawDVLDataFlags()
+    status: RawDVLDataFlags = field(default_factory=RawDVLDataFlags, repr=False)
     bottom_velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
     bottom_velocity_standard_deviation: float = 0
     water_velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
