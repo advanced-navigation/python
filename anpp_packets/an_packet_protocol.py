@@ -133,17 +133,15 @@ class ANDecoder:
         else:
             self.buffer.extend(packet_bytes)
 
-        self.mem_view = memoryview(self.buffer)
-
     def decode(self):
         """Takes binary data byte array consisting of ANPP packets. Returns tuple
         consisting of first ANPP packet found and inputted byte array with the first
         ANPP packet returned and data before this packet, removed."""
-        buffer_length = len(self.mem_view)
+        buffer_length = len(self.buffer)
 
         while (self.decode_iterator + AN_PACKET_HEADER_SIZE) <= buffer_length:
             header_lrc = self.buffer[self.decode_iterator]
-            header_data = self.mem_view[
+            header_data = self.buffer[
                 self.decode_iterator + 1 : self.decode_iterator + AN_PACKET_HEADER_SIZE
             ]
 
@@ -158,7 +156,7 @@ class ANDecoder:
 
                 crc = header_data[2] | (header_data[3] << 8)
 
-                if crc == calculate_crc16(self.mem_view[data_start:data_end]):
+                if crc == calculate_crc16(self.buffer[data_start:data_end]):
                     if (
                         header_data[0] not in PacketID._value2member_map_
                         and header_data[0] != 82
@@ -169,7 +167,7 @@ class ANDecoder:
                     self.an_packet.id = int(header_data[0])
                     self.an_packet.length = length
                     self.an_packet.header = bytes(
-                        self.mem_view[self.decode_iterator : data_start]
+                        self.buffer[self.decode_iterator : data_start]
                     )
                     self.an_packet.data = bytes(self.buffer[data_start:data_end])
 
@@ -186,4 +184,3 @@ class ANDecoder:
             self.decode_iterator = 0
 
         return None
-
