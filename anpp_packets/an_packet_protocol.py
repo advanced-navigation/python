@@ -31,6 +31,7 @@ from typing import Final
 from array import array
 from struct import pack
 import struct
+from fastcrc import crc16
 
 from anpp_packets.an_packets import PacketID
 
@@ -85,22 +86,7 @@ def calculate_header_lrc(data: bytes):
 
 def calculate_crc16(data: bytes):
     """Takes in byte array and returns crc16 value of data"""
-    crc = 0xFFFF
-    for i in range(0, len(data)):
-        crc = ((crc << 8) & 0xFFFF) ^ (crc16_table[(crc >> 8) ^ data[i]])
-    return crc
-
-
-@dataclass()
-class ANDecoder:
-    """Byte array used to store received binary data to be decoded"""
-
-    buffer: bytearray = field(default_factory=bytearray)
-    crc_errors: int = 0
-
-    def add_data(self, packet_bytes):
-        """Add data bytes to the buffer"""
-        self.buffer.extend(packet_bytes)
+    return crc16.ibm_3740(bytes(data))
 
 
 @dataclass()
@@ -132,54 +118,72 @@ class ANPacket:
         return self.header + self.data
 
 
-def an_packet_decode(an_decoder: ANDecoder):
-    """Takes binary data byte array consisting of ANPP packets. Returns tuple
-    consisting of first ANPP packet found and inputted byte array with the first
-    ANPP packet returned and data before this packet, removed."""
-    decoder_data = an_decoder
+class ANDecoder:
+    decode_iterator: int = 0
 
-    decode_iterator = 0
-    an_packet = None
-    buffer_length = len(an_decoder.buffer)
+    buffer: bytearray = bytearray()
+    mem_view: memoryview
+    crc_errors: int = 0
+    an_packet: ANPacket = ANPacket()
 
-    while (decode_iterator + AN_PACKET_HEADER_SIZE) <= buffer_length:
-        header_lrc = an_decoder.buffer[decode_iterator]
-        header_data = an_decoder.buffer[
-            decode_iterator + 1 : decode_iterator + AN_PACKET_HEADER_SIZE
-        ]
+    def add_data(self, packet_bytes):
+        """Add data bytes to the buffer"""
+        if self.buffer is None or len(self.buffer) == 0:
+            self.buffer = packet_bytes
+        else:
+            self.buffer.extend(packet_bytes)
 
-        if header_lrc == calculate_header_lrc(header_data):
-            length = header_data[1]
+        self.mem_view = memoryview(self.buffer)
 
-            data_start = decode_iterator + AN_PACKET_HEADER_SIZE
-            data_end = data_start + length
+    def decode(self):
+        """Takes binary data byte array consisting of ANPP packets. Returns tuple
+        consisting of first ANPP packet found and inputted byte array with the first
+        ANPP packet returned and data before this packet, removed."""
+        buffer_length = len(self.mem_view)
 
-            if data_end > buffer_length:
-                return None, decoder_data
+        while (self.decode_iterator + AN_PACKET_HEADER_SIZE) <= buffer_length:
+            header_lrc = self.buffer[self.decode_iterator]
+            header_data = self.mem_view[
+                self.decode_iterator + 1 : self.decode_iterator + AN_PACKET_HEADER_SIZE
+            ]
 
-            crc = header_data[2] | (header_data[3] << 8)
+            if header_lrc == calculate_header_lrc(header_data):
+                length = header_data[1]
 
-            if crc == calculate_crc16(an_decoder.buffer[data_start:data_end]):
-                if (
-                    header_data[0] not in PacketID._value2member_map_
-                    and header_data[0] != 82
-                ):
-                    decode_iterator += 1
-                    continue
-                an_packet = ANPacket()
-                an_packet.id = int(header_data[0])
-                an_packet.length = length
-                an_packet.header = bytes(an_decoder.buffer[decode_iterator:data_start])
-                an_packet.data = bytes(an_decoder.buffer[data_start:data_end])
+                data_start = self.decode_iterator + AN_PACKET_HEADER_SIZE
+                data_end = data_start + length
 
-                decode_iterator += AN_PACKET_HEADER_SIZE + an_packet.length
-                decoder_data.buffer = an_decoder.buffer[decode_iterator:]
-                break
-            else:
-                decoder_data.crc_errors += 1
-        decode_iterator += 1
+                if data_end > buffer_length:
+                    return None
 
-    if decode_iterator > buffer_length:
-        decoder_data = None
+                crc = header_data[2] | (header_data[3] << 8)
 
-    return an_packet, decoder_data
+                if crc == calculate_crc16(self.mem_view[data_start:data_end]):
+                    if (
+                        header_data[0] not in PacketID._value2member_map_
+                        and header_data[0] != 82
+                    ):
+                        self.decode_iterator += 1
+                        continue
+
+                    self.an_packet.id = int(header_data[0])
+                    self.an_packet.length = length
+                    self.an_packet.header = bytes(
+                        self.mem_view[self.decode_iterator : data_start]
+                    )
+                    self.an_packet.data = bytes(self.buffer[data_start:data_end])
+
+                    self.decode_iterator += (
+                        AN_PACKET_HEADER_SIZE + self.an_packet.length
+                    )
+                    return self.an_packet
+                else:
+                    self.crc_errors += 1
+            self.decode_iterator += 1
+
+        if self.decode_iterator > buffer_length:
+            self.buffer = bytearray()
+            self.decode_iterator = 0
+
+        return None
+
