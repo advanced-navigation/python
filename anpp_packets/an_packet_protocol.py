@@ -126,7 +126,8 @@ class ANDecoder:
     crc_errors: int = 0
     an_packet: ANPacket = ANPacket()
 
-    def add_data(self, packet_bytes):
+    def add_data(self, packet_bytes: bytes):
+        packet_bytes = bytearray(packet_bytes)
         """Add data bytes to the buffer"""
         if self.buffer is None or len(self.buffer) == 0:
             self.buffer = packet_bytes

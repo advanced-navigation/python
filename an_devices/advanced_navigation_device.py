@@ -35,11 +35,12 @@ from abc import ABC, abstractmethod
 from anpp_packets import *
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANDecoder
+from anpp_packets.an_packet_1 import RequestPacket
 
 
 class AdvancedNavigationDevice(ABC):
     def __init__(self, port, baud):
-        self.bytes_waiting = ANDecoder()
+        self.decoder = ANDecoder()
         self.ser = None
         self.logFile = None
 
