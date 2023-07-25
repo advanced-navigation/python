@@ -119,8 +119,8 @@ class RawGNSSPacket:
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
             values = self._structure.unpack_from(an_packet.data)
-            (self.unix_time_seconds, self.microseconds, *self.position) = values[0:6]
-            self.velocity = list(values[6:9])
+            (self.unix_time_seconds, self.microseconds, *self.position) = values[0:5]
+            self.velocity = list(values[5:8])
 
             (
                 *self.position_standard_deviation,
@@ -129,7 +129,7 @@ class RawGNSSPacket:
                 self.tilt_standard_deviation,
                 self.heading_standard_deviation,
                 flags_value,
-            ) = values[9:]
+            ) = values[8:]
 
             self.flags.unpack(flags_value)
             return 0

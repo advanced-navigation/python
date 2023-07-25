@@ -68,8 +68,8 @@ class ExtendedDeviceInformationPacket:
             self.software_version = values[0]
             self.device_id = values[1]
             self.hardware_revision = values[2]
-            self.serial_number = list(values[3:7])
-            self.device_subtype = values[7]
+            self.serial_number = list(values[3:6])
+            self.device_subtype = values[6]
             return 0
         else:
             return 1

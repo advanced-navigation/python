@@ -189,7 +189,9 @@ class GPIOOutputConfigurationPacket:
         elif (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH_V1):
             values = self._structure_v1.unpack_from(an_packet.data)
             self.permanent = values[0]
-            self.gpio_1.nmea_fix_behaviour = self.gpio_3.gpzda_rate = values[1]
+            self.gpio_1.nmea_fix_behaviour = (
+                self.gpio_3.nmea_fix_behaviour
+            ) = NMEAFixBehaviour(values[1])
             self.gpio_1.gpzda_rate = GPIORate(values[2])
             self.gpio_3.gpzda_rate = GPIORate((values[2] & 0xFF) >> 4)
             self.gpio_1.gpgga_rate = GPIORate(values[3])
