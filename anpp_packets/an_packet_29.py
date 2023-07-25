@@ -70,6 +70,23 @@ class RawGNSSFlags:
         self.gnns_1_failure = (flags_byte & (1 << 14)) != 0
         self.gnns_2_failure = (flags_byte & (1 << 15)) != 0
 
+    def pack(self) -> int:
+        """Pack the boolean flags into a single integer byte"""
+        flags_byte = self.fix_type & 0x0007
+        flags_byte |= int(self.doppler_velocity_valid) << 3
+        flags_byte |= int(self.time_valid) << 4
+        flags_byte |= int(self.external_gnss) << 5
+        flags_byte |= int(self.tilt_valid) << 6
+        flags_byte |= int(self.heading_valid) << 7
+        flags_byte |= int(self.floating_ambiguity_heading) << 8
+        flags_byte |= int(self.antenna_1_disconnected) << 10
+        flags_byte |= int(self.antenna_2_disconnected) << 11
+        flags_byte |= int(self.antenna_1_short) << 12
+        flags_byte |= int(self.antenna_2_short) << 13
+        flags_byte |= int(self.gnns_1_failure) << 14
+        flags_byte |= int(self.gnns_2_failure) << 15
+        return flags_byte
+
 
 @dataclass()
 class RawGNSSPacket:
@@ -82,13 +99,13 @@ class RawGNSSPacket:
     position_standard_deviation: List[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
-    tilt: float = 0
+    tilt: float = 0.0
     """Only valid if an external dual antenna GNSS system is connected"""
-    heading: float = 0
+    heading: float = 0.0
     """Only valid if an external dual antenna GNSS system is connected"""
-    tilt_standard_deviation: float = 0
+    tilt_standard_deviation: float = 0.0
     """Only valid if an external dual antenna GNSS system is connected"""
-    heading_standard_deviation: float = 0
+    heading_standard_deviation: float = 0.0
     """Only valid if an external dual antenna GNSS system is connected"""
     flags: RawGNSSFlags = field(default_factory=RawGNSSFlags, repr=False)
 
@@ -132,7 +149,7 @@ class RawGNSSPacket:
             self.heading,
             self.tilt_standard_deviation,
             self.heading_standard_deviation,
-            self.flags.value
+            self.flags.pack()
         )
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)
