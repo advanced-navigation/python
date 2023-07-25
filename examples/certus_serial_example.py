@@ -50,8 +50,8 @@ if __name__ == "__main__":
     comport = str(sys.argv[1])
     baudrate = sys.argv[2]
 
-    certus = certus_device.Certus(comport, baudrate)
-    certus.start_serial()
+    certus = certus_device.Certus_serial(comport, baudrate)
+    certus.start()
 
     # Checks serial port connection is open
     if certus.is_open:

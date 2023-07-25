@@ -27,7 +27,9 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from .advanced_navigation_device import AdvancedNavigationDevice as _AdvancedNavigationDevice
+from .advanced_navigation_device_serial import (
+    AdvancedNavigationDeviceSerial as _AdvancedNavigationDevice,
+)
 from anpp_packets.an_packets import PacketID as _PacketID
 
 from anpp_packets.an_packet_0 import AcknowledgePacket, AcknowledgeResult
@@ -36,7 +38,11 @@ from anpp_packets.an_packet_2 import BootModePacket, BootMode
 from anpp_packets.an_packet_3 import DeviceInformationPacket
 from anpp_packets.an_packet_4 import RestoreFactorySettingsPacket
 from anpp_packets.an_packet_5 import ResetPacket, ResetVerification
-from anpp_packets.an_packet_7 import FileTransferFirstPacket, DataEncoding, FileTransferMetadata
+from anpp_packets.an_packet_7 import (
+    FileTransferFirstPacket,
+    DataEncoding,
+    FileTransferMetadata,
+)
 from anpp_packets.an_packet_8 import FileTransferAcknowledgePacket, FileTransferResponse
 from anpp_packets.an_packet_9 import FileTransferOngoingPacket
 from anpp_packets.an_packet_20 import SystemStatePacket, GNSSFixType
@@ -60,33 +66,68 @@ from anpp_packets.an_packet_50 import LocalMagneticFieldPacket
 from anpp_packets.an_packet_180 import PacketTimerPeriodPacket
 from anpp_packets.an_packet_181 import PacketsPeriodPacket
 from anpp_packets.an_packet_182 import BaudRatesPacket
-from anpp_packets.an_packet_184 import SensorRangesPacket, AccelerometerRange, GyroscopeRange, MagnetometerRange
+from anpp_packets.an_packet_184 import (
+    SensorRangesPacket,
+    AccelerometerRange,
+    GyroscopeRange,
+    MagnetometerRange,
+)
 from anpp_packets.an_packet_185 import InstallationAlignmentPacket
 from anpp_packets.an_packet_186 import FilterOptionsPacket, VehicleType
-from anpp_packets.an_packet_188 import GPIOConfigurationPacket, GPIO1Function, GPIO2Function, AuxiliaryTxFunction, AuxiliaryRxFunction, GPIOIndex
+from anpp_packets.an_packet_188 import (
+    GPIOConfigurationPacket,
+    GPIO1Function,
+    GPIO2Function,
+    AuxiliaryTxFunction,
+    AuxiliaryRxFunction,
+    GPIOIndex,
+)
 from anpp_packets.an_packet_189 import MagneticCalibrationValuesPacket
-from anpp_packets.an_packet_190 import MagneticCalibrationConfigurationPacket, MagneticCalibrationAction
-from anpp_packets.an_packet_191 import MagneticCalibrationStatusPacket, MagneticCalibrationStatus
+from anpp_packets.an_packet_190 import (
+    MagneticCalibrationConfigurationPacket,
+    MagneticCalibrationAction,
+)
+from anpp_packets.an_packet_191 import (
+    MagneticCalibrationStatusPacket,
+    MagneticCalibrationStatus,
+)
 from anpp_packets.an_packet_193 import SetZeroOrientationAlignmentPacket
 
 
 class Orientus(_AdvancedNavigationDevice):
-    """ Orientus object with high level functions for setting and receiving values """
+    """Orientus object with high level functions for setting and receiving values"""
 
-    valid_baud_rates = [2400, 4800, 9600, 19200, 38400, 57600,
-                        115200, 230400, 250000, 460800, 500000,
-                        800000, 921600, 1000000, 1250000, 2000000]
+    valid_baud_rates = [
+        2400,
+        4800,
+        9600,
+        19200,
+        38400,
+        57600,
+        115200,
+        230400,
+        250000,
+        460800,
+        500000,
+        800000,
+        921600,
+        1000000,
+        1250000,
+        2000000,
+    ]
 
     def return_device_information_and_configuration_packets(self):
-        """ Returns Orientus' Device Information and Configuration packets as
-            all Advanced Navigation devices have different packets available """
-        return [_PacketID.device_information,
-                _PacketID.packet_timer_period,
-                _PacketID.packets_period,
-                _PacketID.baud_rates,
-                _PacketID.sensor_ranges,
-                _PacketID.installation_alignment,
-                _PacketID.filter_options,
-                _PacketID.gpio_configuration,
-                _PacketID.magnetic_calibration_values,
-                _PacketID.magnetic_calibration_status]
+        """Returns Orientus' Device Information and Configuration packets as
+        all Advanced Navigation devices have different packets available"""
+        return [
+            _PacketID.device_information,
+            _PacketID.packet_timer_period,
+            _PacketID.packets_period,
+            _PacketID.baud_rates,
+            _PacketID.sensor_ranges,
+            _PacketID.installation_alignment,
+            _PacketID.filter_options,
+            _PacketID.gpio_configuration,
+            _PacketID.magnetic_calibration_values,
+            _PacketID.magnetic_calibration_status,
+        ]
