@@ -1,1 +1,2 @@
-PySerial>=3.4
+fastcrc==0.2.1
+pyserial==3.5
