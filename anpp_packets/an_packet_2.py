@@ -56,7 +56,7 @@ class BootModePacket:
         """Decode ANPacket to Boot Mode Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.boot_mode = BootMode(self._structure.unpack_from(an_packet.data))
+            self.boot_mode = BootMode(self._structure.unpack_from(an_packet.data)[0])
             return 0
         else:
             return 1
