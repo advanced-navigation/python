@@ -119,13 +119,15 @@ class ANPacket:
 
 
 class ANDecoder:
+    BUFFER_STREAM_LIMIT: int = 10 * 1024 * 1024     # 10MB limit to check when adding/streaming data where we resize the buffer 
+    DECODER_ITERATOR_LIMIT: int = 10 * 1024 * 1024  # 10MB limit for when we resize the buffer after decoding that amount of data
+    
     decode_iterator: int = 0
-
     buffer: bytearray = bytearray()
     mem_view: memoryview
     crc_errors: int = 0
     an_packet: ANPacket = ANPacket()
-
+    
     def add_data(self, packet_bytes: bytes):
         packet_bytes = bytearray(packet_bytes)
         """Add data bytes to the buffer"""
@@ -133,6 +135,14 @@ class ANDecoder:
             self.buffer = packet_bytes
         else:
             self.buffer.extend(packet_bytes)
+            
+        if len(self.buffer) > self.BUFFER_STREAM_LIMIT:
+            self.remove_processed_data()
+            
+    def remove_processed_data(self):
+        if self.decode_iterator > 0:
+            self.buffer = self.buffer[self.decode_iterator:]
+            self.decode_iterator = 0
 
     def decode(self):
         """Takes binary data byte array consisting of ANPP packets. Returns tuple
@@ -175,6 +185,9 @@ class ANDecoder:
                     self.decode_iterator += (
                         AN_PACKET_HEADER_SIZE + self.an_packet.length
                     )
+                    if self.decode_iterator > self.DECODER_ITERATOR_LIMIT:
+                        self.remove_processed_data()
+
                     return self.an_packet
                 else:
                     self.crc_errors += 1
