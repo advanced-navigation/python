@@ -1,7 +1,7 @@
 ################################################################################
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
-##                        advanced_navigation_device.py                       ##
+##                        advanced_navigation_device_serial.py                ##
 ##                     Copyright 2023, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
@@ -41,17 +41,16 @@ class AdvancedNavigationDeviceSerial(ABC):
     def __init__(self, port, baud):
         self.decoder = ANDecoder()
         self.ser = None
-        self.logFile = None
 
         if isinstance(port, str):
             self.port = port
         else:
-            print(f"Port:{port} is not valid")
+            raise ValueError(f"Port:{port} is not valid")
 
         if int(baud) in self.valid_baud_rates:
             self.baud = baud
         else:
-            print(f"Baud Rate:{baud} is not valid")
+            raise ValueError(f"Baud Rate:{baud} is not valid")
 
     @property
     @abstractmethod
@@ -79,7 +78,7 @@ class AdvancedNavigationDeviceSerial(ABC):
             )
         else:
             print(
-                f"Packet_example currently only supports Windows and Linux operating systems."
+                "Packet_example currently only supports Windows and Linux operating systems."
             )
             exit()
 

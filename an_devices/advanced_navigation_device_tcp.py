@@ -1,7 +1,7 @@
 ################################################################################
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
-##                        advanced_navigation_device.py                       ##
+##                        advanced_navigation_device_tcp.py                   ##
 ##                     Copyright 2023, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
@@ -27,11 +27,9 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-import os
 import socket
 from abc import ABC, abstractmethod
 
-from anpp_packets import *
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANDecoder
 from anpp_packets.an_packet_1 import RequestPacket
@@ -41,15 +39,18 @@ class AdvancedNavigationDeviceTCP(ABC):
     def __init__(self, address, port):
         self.timeout = 0.5
         self.address = None
-        self.port = port
+        self.port = None
         self.decoder = ANDecoder()
-        self.ser = None
-        self.logFile = None
 
         if isinstance(address, str):
             self.address = address
         else:
-            print(f"Port:{address} is not valid")
+            raise ValueError(f"IP Address :{address} is not valid")
+
+        if isinstance(port, int):
+            self.port = port
+        else:
+            raise ValueError(f"Port:{port} is not valid")
 
     # TCP Communications
     def start(self):
