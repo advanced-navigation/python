@@ -1,12 +1,12 @@
 ################################################################################
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
-##                            an_packet_1_test.py                             ##
-##                     Copyright 2021, Advanced Navigation                    ##
+##                            encode_decode_test.py                           ##
+##                     Copyright 2023, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
 #                                                                              #
-# Copyright (C) 2021 Advanced Navigation                                       #
+# Copyright (C) 2023 Advanced Navigation                                       #
 #                                                                              #
 # Permission is hereby granted, free of charge, to any person obtaining        #
 # a copy of this software and associated documentation files (the "Software"), #

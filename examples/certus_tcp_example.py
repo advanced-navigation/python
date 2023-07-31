@@ -1,12 +1,12 @@
 ################################################################################
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
-##                              certus_example.py                             ##
-##                     Copyright 2022, Advanced Navigation                    ##
+##                              certus_tcp_example.py                         ##
+##                     Copyright 2023, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
 #                                                                              #
-# Copyright (C) 2022 Advanced Navigation                                       #
+# Copyright (C) 2023 Advanced Navigation                                       #
 #                                                                              #
 # Permission is hereby granted, free of charge, to any person obtaining        #
 # a copy of this software and associated documentation files (the "Software"), #

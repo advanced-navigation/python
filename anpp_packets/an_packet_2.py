@@ -2,11 +2,11 @@
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
 ##                               an_packet_2.py                               ##
-##                     Copyright 2022, Advanced Navigation                    ##
+##                     Copyright 2023, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
 #                                                                              #
-# Copyright (C) 2022 Advanced Navigation                                       #
+# Copyright (C) 2023 Advanced Navigation                                       #
 #                                                                              #
 # Permission is hereby granted, free of charge, to any person obtaining        #
 # a copy of this software and associated documentation files (the "Software"), #
@@ -29,7 +29,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from struct import pack
+import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
 
@@ -50,11 +50,13 @@ class BootModePacket:
     ID = PacketID.boot_mode
     LENGTH = 1
 
+    _structure = struct.Struct("<B")
+    
     def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Boot Mode Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.boot_mode = BootMode(an_packet.data[0])
+            self.boot_mode = BootMode(self._structure.unpack_from(an_packet.data))
             return 0
         else:
             return 1
@@ -62,7 +64,7 @@ class BootModePacket:
     def encode(self) -> ANPacket:
         """Encode Boot Mode Packet to ANPacket
         Returns the ANPacket"""
-        data = pack("<B", self.boot_mode.value)
+        data = self._structure.pack(self.boot_mode.value)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

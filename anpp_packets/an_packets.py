@@ -2,11 +2,11 @@
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
 ##                                an_packets.py                               ##
-##                     Copyright 2021, Advanced Navigation                    ##
+##                     Copyright 2023, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
 #                                                                              #
-# Copyright (C) 2021 Advanced Navigation                                       #
+# Copyright (C) 2023 Advanced Navigation                                       #
 #                                                                              #
 # Permission is hereby granted, free of charge, to any person obtaining        #
 # a copy of this software and associated documentation files (the "Software"), #
@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from enum import Enum, IntEnum
+from enum import IntEnum
 
 
 class PacketID(IntEnum):

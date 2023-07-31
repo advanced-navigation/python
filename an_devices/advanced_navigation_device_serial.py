@@ -2,11 +2,11 @@
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
 ##                        advanced_navigation_device.py                       ##
-##                     Copyright 2021, Advanced Navigation                    ##
+##                     Copyright 2023, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
 #                                                                              #
-# Copyright (C) 2021 Advanced Navigation                                       #
+# Copyright (C) 2023 Advanced Navigation                                       #
 #                                                                              #
 # Permission is hereby granted, free of charge, to any person obtaining        #
 # a copy of this software and associated documentation files (the "Software"), #
@@ -32,7 +32,6 @@ import serial
 import serial.serialutil as serialutil
 from abc import ABC, abstractmethod
 
-from anpp_packets import *
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANDecoder
 from anpp_packets.an_packet_1 import RequestPacket

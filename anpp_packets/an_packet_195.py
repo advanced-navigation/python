@@ -2,11 +2,11 @@
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
 ##                              an_packet_195.py                              ##
-##                     Copyright 2022, Advanced Navigation                    ##
+##                     Copyright 2023, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
 #                                                                              #
-# Copyright (C) 2022 Advanced Navigation                                       #
+# Copyright (C) 2023 Advanced Navigation                                       #
 #                                                                              #
 # Permission is hereby granted, free of charge, to any person obtaining        #
 # a copy of this software and associated documentation files (the "Software"), #
@@ -49,6 +49,7 @@ class GPIORate(Enum):
     gpio_rate_10hz = 7
     gpio_rate_25hz = 8
     gpio_rate_50hz = 9
+    gpio_rate_8hz = 10
 
 
 class PortInputMode(Enum):

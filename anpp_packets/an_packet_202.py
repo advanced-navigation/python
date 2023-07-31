@@ -2,11 +2,11 @@
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
 ##                              an_packet_202.py                              ##
-##                     Copyright 2022, Advanced Navigation                    ##
+##                     Copyright 2023, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
 #                                                                              #
-# Copyright (C) 2022 Advanced Navigation                                       #
+# Copyright (C) 2023 Advanced Navigation                                       #
 #                                                                              #
 # Permission is hereby granted, free of charge, to any person obtaining        #
 # a copy of this software and associated documentation files (the "Software"), #
@@ -29,7 +29,6 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from struct import pack
 import struct
 from anpp_packets.an_packets import PacketID
 from anpp_packets.an_packet_protocol import ANPacket
@@ -91,7 +90,7 @@ class IPDataportConfigurationPacket:
     def encode(self) -> ANPacket:
         """Encode IP Dataport Configuration Packet to ANPacket
         Returns the ANPacket"""
-        data = pack("<H", 0)
+        data = struct.pack("<H", 0)
         for i in range(4):
             data += self.ip_dataport_configuration[i].pack()
 

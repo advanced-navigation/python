@@ -2,11 +2,11 @@
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
 ##                               an_packet_1.py                               ##
-##                     Copyright 2021, Advanced Navigation                    ##
+##                     Copyright 2023, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
 #                                                                              #
-# Copyright (C) 2021 Advanced Navigation                                       #
+# Copyright (C) 2023 Advanced Navigation                                       #
 #                                                                              #
 # Permission is hereby granted, free of charge, to any person obtaining        #
 # a copy of this software and associated documentation files (the "Software"), #
@@ -28,7 +28,7 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from struct import pack
+import struct
 
 from typing import List
 
@@ -44,6 +44,7 @@ class RequestPacket:
 
     ID = PacketID.request
 
+    _structure = struct.Struct("<B")
     def encode(self) -> ANPacket:
         """Encode Request Packet to ANPacket
         Returns the ANPacket"""
@@ -52,7 +53,7 @@ class RequestPacket:
 
         data = bytes()
         for packet in self.requested_packets:
-            data += pack("<B", PacketID(packet).value)
+            data += self._structure.pack(PacketID(packet).value)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, len(data), data)

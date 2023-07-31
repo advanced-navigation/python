@@ -2,11 +2,11 @@
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
 ##                               an_packet_55.py                              ##
-##                     Copyright 2022, Advanced Navigation                    ##
+##                     Copyright 2023, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
 #                                                                              #
-# Copyright (C) 2022 Advanced Navigation                                       #
+# Copyright (C) 2023 Advanced Navigation                                       #
 #                                                                              #
 # Permission is hereby granted, free of charge, to any person obtaining        #
 # a copy of this software and associated documentation files (the "Software"), #
@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from typing import List, Optional
+from typing import Optional
 from dataclasses import dataclass, field
 
 from anpp_packets.an_packets import PacketID
