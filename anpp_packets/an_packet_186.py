@@ -70,7 +70,7 @@ class FilterOptionsPacket:
     ID = PacketID.filter_options
     LENGTH = 17
 
-    _structure = struct.Struct("<BBBxBBBBBB7x")
+    _structure = struct.Struct("<9B8x")
 
     def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Filter Options Packet
