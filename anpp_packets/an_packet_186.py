@@ -66,11 +66,12 @@ class FilterOptionsPacket:
     reversing_detection_enabled: int = 0
     motion_analysis_enabled: int = 0
     automatic_magnetic_calibration_enabled: int = 0
+    dual_antenna_disabled: int = 0
 
     ID = PacketID.filter_options
     LENGTH = 17
 
-    _structure = struct.Struct("<BBBxBBBBBB7x")
+    _structure = struct.Struct("<10B7x")
 
     def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Filter Options Packet
@@ -86,6 +87,7 @@ class FilterOptionsPacket:
                 self.reversing_detection_enabled,
                 self.motion_analysis_enabled,
                 self.automatic_magnetic_calibration_enabled,
+                self.dual_antenna_disabled
             ) = self._structure.unpack_from(an_packet.data)
             self.vehicle_type = VehicleType(vehicle_type_value)
             return 0
@@ -105,6 +107,7 @@ class FilterOptionsPacket:
             self.reversing_detection_enabled,
             self.motion_analysis_enabled,
             self.automatic_magnetic_calibration_enabled,
+            self.dual_antenna_disabled
         )
 
         an_packet = ANPacket()
