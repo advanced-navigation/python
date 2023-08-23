@@ -33,22 +33,24 @@ import datetime
 import sys
 
 import an_devices.air_data_unit_device as adu_device
-from anpp_packets.an_packet_protocol import ANPacket, an_packet_decode
+from anpp_packets.an_packet_protocol import ANPacket
 from anpp_packets.an_packets import PacketID
 
 
 if __name__ == '__main__':
     # Checks enough arguments in command for serial communications. Otherwise, prompts user on use.
     if len(sys.argv) != 3:
-        print(f"Usage: program com_port baud_rate\n"
-              f"Windows Example: python air_data_unit_example.py COM1 115200\n"
-              f"Linux Example: python air_data_unit_example.py /dev/ttyUSB0 115200")
+        print(
+            f"Usage: program com_port baud_rate\n"
+            f"Windows Example: python air_data_unit_example.py COM1 115200\n"
+            f"Linux Example: python air_data_unit_example.py /dev/ttyUSB0 115200"
+        )
         exit()
     comport = str(sys.argv[1])
     baudrate = sys.argv[2]
 
     air_data_unit = adu_device.AirDataUnit(comport, baudrate)
-    air_data_unit.start_serial()
+    air_data_unit.start()
 
     # Checks serial port connection is open
     if air_data_unit.is_open:
@@ -64,7 +66,7 @@ if __name__ == '__main__':
         air_data_unit.get_device_and_configuration_information()
 
         while air_data_unit.is_open:
-            if air_data_unit.in_waiting() > 0:
+            if air_data_unit.in_waiting():
                 # Get bytes in serial buffer
                 bytes_in_buffer = air_data_unit.in_waiting()
                 data_bytes = air_data_unit.read(bytes_in_buffer)
@@ -73,11 +75,11 @@ if __name__ == '__main__':
                 logFile.write(data_bytes)
 
                 # Adds bytes to array for decoding
-                air_data_unit.bytes_waiting.add_data(packet_bytes=data_bytes)
+                air_data_unit.decoder.add_data(packet_bytes=data_bytes)
 
             # If bytes are in array then decode
-            if len(air_data_unit.bytes_waiting.buffer) > 0:
-                an_packet, air_data_unit.bytes_waiting = an_packet_decode(air_data_unit.bytes_waiting)
+            if len(air_data_unit.decoder.buffer) > 0:
+                an_packet = air_data_unit.decoder.decode()
 
                 # ===============================================================
                 # This example is only printing a subset of a few packets contents.
@@ -88,21 +90,25 @@ if __name__ == '__main__':
                     if an_packet.id == PacketID.raw_sensors:
                         raw_sensor_packet = adu_device.RawSensorsPacket()
                         if raw_sensor_packet.decode(an_packet) == 0:
-                            print(f"Raw Sensors Packet:\n"
-                                  f"\tAbsolute Pressure: {raw_sensor_packet.absolute_pressure} Pa\n"
-                                  f"\tDifferential Pressure: {raw_sensor_packet.differential_pressure} Pa\n"
-                                  f"\tRaw Sensor Status: \n"
-                                  f"\t\tabsolute_pressure_valid: {raw_sensor_packet.raw_sensors_status.absolute_pressure_valid}\n"
-                                  f"\t\tdifferential_pressure_valid: {raw_sensor_packet.raw_sensors_status.differential_pressure_valid}\n"
-                                  f"\tTemperature: {raw_sensor_packet.temperature} degrees C")
+                            print(
+                                f"Raw Sensors Packet:\n"
+                                f"\tAbsolute Pressure: {raw_sensor_packet.absolute_pressure} Pa\n"
+                                f"\tDifferential Pressure: {raw_sensor_packet.differential_pressure} Pa\n"
+                                f"\tRaw Sensor Status: \n"
+                                f"\t\tabsolute_pressure_valid: {raw_sensor_packet.raw_sensors_status.absolute_pressure_valid}\n"
+                                f"\t\tdifferential_pressure_valid: {raw_sensor_packet.raw_sensors_status.differential_pressure_valid}\n"
+                                f"\tTemperature: {raw_sensor_packet.temperature} degrees C"
+                            )
                     elif an_packet.id == PacketID.external_air_data:
                         air_data_packet = adu_device.AirDataPacket()
                         if air_data_packet.decode(an_packet) == 0:
-                            print(f"Air Data Packet:\n"
-                                  f"\tBarometric Altitude: {air_data_packet.barometric_altitude} m\n"
-                                  f"\tBarometric Altitude Standard Deviation: {air_data_packet.barometric_altitude_standard_deviation} m\n"
-                                  f"\tAirspeed: {air_data_packet.airspeed} m/s\n"
-                                  f"\tAirspeed Standard Deviation: {air_data_packet.airspeed_standard_deviation} m/s")
+                            print(
+                                f"Air Data Packet:\n"
+                                f"\tBarometric Altitude: {air_data_packet.barometric_altitude} m\n"
+                                f"\tBarometric Altitude Standard Deviation: {air_data_packet.barometric_altitude_standard_deviation} m\n"
+                                f"\tAirspeed: {air_data_packet.airspeed} m/s\n"
+                                f"\tAirspeed Standard Deviation: {air_data_packet.airspeed_standard_deviation} m/s"
+                            )
                     elif an_packet.id != 0:
                         print(f"Received {an_packet.id} of length:{an_packet.length}")
     else:
