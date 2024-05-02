@@ -52,6 +52,9 @@ class RawDVLDataFlags:
         self.depth_valid = (data & (1 << 3)) != 0
         self.altitude_valid = (data & (1 << 4)) != 0
 
+    def pack(self) -> int:
+        return (self.bottom_velocity_valid << 0) & (self.water_velocity_valid << 1) & (self.temperature_valid << 2) & (self.depth_valid << 3) & (self.altitude_valid << 4)
+
 
 @dataclass()
 class RawDVLDataPacket:
@@ -96,3 +99,22 @@ class RawDVLDataPacket:
             return 0
         else:
             return 1
+        
+    def encode(self) -> ANPacket:
+        data = self._structure.pack(
+            self.unix_time,
+            self.microseconds,
+            self.status.pack(),
+            *self.bottom_velocity,
+            self.bottom_velocity_standard_deviation,
+            *self.water_velocity,
+            self.water_velocity_standard_deviation,
+            self.water_velocity_layer_depth,
+            self.depth,
+            self.altitude,
+            self.temperature,
+        )
+
+        an_packet = ANPacket()
+        an_packet.encode(self.ID, self.LENGTH, data)
+        return an_packet
