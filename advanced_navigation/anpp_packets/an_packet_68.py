@@ -57,11 +57,11 @@ class ExternalAirDataFlags:
         """Pack to data bytes"""
         return (
             (self.barometric_altitude_set_and_valid << 0)
-            & (self.airspeed_set_and_valid << 1)
-            & (self.barometric_altitude_overrange << 2)
-            & (self.airspeed_overrange << 3)
-            & (self.barometric_altitude_sensor_failure << 4)
-            & (self.airspeed_sensor_failure << 5)
+            | (self.airspeed_set_and_valid << 1)
+            | (self.barometric_altitude_overrange << 2)
+            | (self.airspeed_overrange << 3)
+            | (self.barometric_altitude_sensor_failure << 4)
+            | (self.airspeed_sensor_failure << 5)
         )
 
 
