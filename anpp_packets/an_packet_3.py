@@ -47,12 +47,20 @@ class DeviceID(Enum):
     air_data_unit = 13
     spatial_fog_dual = 16
     motus = 17
-    gnss_compass = 18
+    gnss_compass = 19
     certus = 26
     aries = 27
     boreas_d90 = 28
-    boreas_d90_fpga = 35
-    boreas_coil = 36
+    boreas_90_fpga = 35
+    boreas_90_coil = 36
+    boreas_70_coil = 40
+    boreas_d70 = 41
+    boreas_70_fpga = 42
+    boreas_a90 = 43
+    boreas_a70 = 44
+    certus_mini_a = 49
+    certus_mini_n = 50
+    certus_mini_d = 51
 
 
 @dataclass()
