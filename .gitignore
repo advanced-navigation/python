@@ -1,2 +1,25 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[codz]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Testing
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+sdk_env/
+
+# IDEs
 .idea/
+.vscode/
+
+# Data
+*.anpp

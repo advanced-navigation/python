@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "advanced_navigation"
+version = "0.2.0"
+description = "Advanced Navigation Python SDK"
+authors = [{ name = "Advanced Navigation", email = "ins-embedded-team@advancednavigation.com" }]
+keywords = ["advanced-navigation", "ins", "sdk"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = [
+    "fastcrc>=0.3.0",
+    "pyserial>=3.5.0",
+    "pyserial-asyncio>=0.6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio",
+    "ruff",
+    "mypy",
+    "types-pyserial",
+]
+
+[project.urls]
+Homepage = "https://www.advancednavigation.com"
+Repository = "https://github.com/advanced-navigation/python"
+"Bug Tracker" = "https://github.com/advanced-navigation/python/issues"
