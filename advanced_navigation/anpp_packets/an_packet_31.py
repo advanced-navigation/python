@@ -123,7 +123,7 @@ class DetailedSatellitesPacket:
             (len(an_packet.data) % DetailedSatellite.LENGTH) == 0
         ):
             number_of_satellites = int(len(an_packet.data) / DetailedSatellite.LENGTH)
-            self.satellites = [DetailedSatellite()] * number_of_satellites
+            self.satellites = [DetailedSatellite() for _ in range(number_of_satellites)]
             for i in range(number_of_satellites):
                 index = i * DetailedSatellite.LENGTH
                 self.satellites[i].unpack(

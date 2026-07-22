@@ -83,7 +83,7 @@ class PacketsPeriodPacket:
         )
         self.permanent = an_packet.data[0]
         self.clear_existing_packets = an_packet.data[1]
-        self.packet_periods = [PacketPeriod()] * packet_periods_count
+        self.packet_periods = [PacketPeriod() for _ in range(packet_periods_count)]
         for i in range(packet_periods_count):
             index = self.MINIMUM_LENGTH + i * PacketPeriod.LENGTH
             self.packet_periods[i].unpack(

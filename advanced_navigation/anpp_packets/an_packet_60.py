@@ -183,8 +183,8 @@ class SatelliteData:
         self.satellite_system = SatelliteSystem(satellite_system_value)
 
         self.frequency_information = [
-            FrequencyInformation()
-        ] * self.number_of_frequencies
+            FrequencyInformation() for _ in range(self.number_of_frequencies)
+        ]
         for i in range(self.number_of_frequencies):
             index = 6 + i * FrequencyInformation.LENGTH
             self.frequency_information[i].unpack(
@@ -225,17 +225,19 @@ class RawSatelliteDataPacket:
                 self.number_of_satellites,
             ) = self._structure.unpack_from(an_packet.data)
 
-            self.satellite_data = [SatelliteData()] * self.number_of_satellites
+            self.satellite_data = [
+                SatelliteData() for _ in range(self.number_of_satellites)
+            ]
 
-            number_of_previous_frequencies = 0
+            total_previous_frequencies = 0
             for i in range(self.number_of_satellites):
                 index = (
                     self.HEAD_LENGTH
                     + i * SatelliteData.MINIMUM_LENGTH
-                    + number_of_previous_frequencies * FrequencyInformation.LENGTH
+                    + total_previous_frequencies * FrequencyInformation.LENGTH
                 )
                 self.satellite_data[i].unpack(an_packet.data[index:])
-                number_of_previous_frequencies = self.satellite_data[
+                total_previous_frequencies += self.satellite_data[
                     i
                 ].number_of_frequencies
             return 0
