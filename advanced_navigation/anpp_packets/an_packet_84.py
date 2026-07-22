@@ -106,7 +106,9 @@ class ExtendedSatellitesPacket:
             )
             self.total_number_of_packets = an_packet.data[0]
             self.packet_number = an_packet.data[1]
-            self.extended_satellites = [ExtendedSatellite()] * number_of_satellites
+            self.extended_satellites = [
+                ExtendedSatellite() for _ in range(number_of_satellites)
+            ]
             for i in range(number_of_satellites):
                 index = self.MINIMUM_LENGTH + i * ExtendedSatellite.LENGTH
                 self.extended_satellites[i].unpack(

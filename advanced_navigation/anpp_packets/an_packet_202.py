@@ -70,7 +70,7 @@ class IPDataportConfigurationPacket:
     """Packet 202 - IP Dataport Configuration Packet"""
 
     ip_dataport_configuration: list[IPDataportConfiguration] = field(
-        default_factory=lambda: [IPDataportConfiguration()] * 4
+        default_factory=lambda: [IPDataportConfiguration() for _ in range(4)]
     )
 
     ID = PacketID.ip_dataports_configuration
