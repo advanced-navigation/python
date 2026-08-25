@@ -27,13 +27,13 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
+import struct
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List
-import struct
 from struct import pack
-from .an_packets import PacketID
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 class GPIORate(Enum):
@@ -158,7 +158,7 @@ class GPIOOutputConfigurationPacket:
     gpio_1: GPIOPort = field(default_factory=GPIOPort, repr=False)
     gpio_3: GPIOPort = field(default_factory=GPIOPort, repr=False)
     logging: GPIOPort | None = None
-    data_ports: List[GPIOPort] | None = None
+    data_ports: list[GPIOPort] | None = None
 
     ID = PacketID.gpio_output_configuration
 

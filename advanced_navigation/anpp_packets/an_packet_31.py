@@ -27,12 +27,12 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
+import struct
 from dataclasses import dataclass, field
 from enum import Enum
-import struct
-from typing import List
-from .an_packets import PacketID
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 class SatelliteSystem(Enum):
@@ -111,7 +111,7 @@ class DetailedSatellite:
 class DetailedSatellitesPacket:
     """Packet 31 - Detailed Satellites Packet"""
 
-    satellites: List[DetailedSatellite] = field(default_factory=list, repr=False)
+    satellites: list[DetailedSatellite] = field(default_factory=list, repr=False)
 
     ID = PacketID.detailed_satellites
     MAXIMUM_DETAILED_SATELLITES = 32

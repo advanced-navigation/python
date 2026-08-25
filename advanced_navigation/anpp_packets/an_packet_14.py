@@ -27,12 +27,12 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
-from .an_packet_protocol import ANPacket
+from dataclasses import dataclass, field
+
 from .an_packet_3 import DeviceID
+from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -42,7 +42,7 @@ class SubcomponentInformation:
     software_version: int = 0
     device_id: DeviceID = DeviceID.unknown
     hardware_revision: int = 0
-    serial_number: List[int] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    serial_number: list[int] = field(default_factory=lambda: [0, 0, 0], repr=False)
 
     LENGTH = 24
 
@@ -62,7 +62,7 @@ class SubcomponentInformation:
 class SubcomponentInformationPacket:
     """Packet 14 - Subcomponent Information Packet"""
 
-    subcomponents_information: List[SubcomponentInformation] = field(
+    subcomponents_information: list[SubcomponentInformation] = field(
         default_factory=list, repr=False
     )
 

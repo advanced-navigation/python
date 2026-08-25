@@ -27,11 +27,13 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from .an_packets import PacketID
-from .an_packet_protocol import ANPacket
+from dataclasses import dataclass, field
 from enum import Enum
+
+from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
+
 
 class FileTransferDataEncoding(Enum):
     """File Transfer Data Encoding"""
@@ -71,7 +73,7 @@ class FileTransferFirstPacket:
         Returns the ANPacket"""
 
         if len(self.packet_data) > FileTransferLimits.max_data_size.value:
-            raise Exception("File data exceeds maximum length")
+            raise ValueError("File data exceeds maximum length")
 
         data = self._structure.pack(self.unique_id, 
                                     self.data_index,
@@ -103,7 +105,7 @@ class FileTransferOngoingPacket:
         Returns the ANPacket"""
 
         if len(self.packet_data) > FileTransferLimits.max_data_size.value:
-            raise Exception("File data exceeds maximum length")
+            raise ValueError("File data exceeds maximum length")
     
         data = self._structure.pack(self.unique_id, self.data_index)
         data += self.packet_data

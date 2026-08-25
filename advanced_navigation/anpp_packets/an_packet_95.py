@@ -27,11 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -75,7 +75,7 @@ class AidingSourceStatusPacket:
     external_depth: AidingSourceStatus = field(default_factory=AidingSourceStatus, repr=False)
     external_usbl: AidingSourceStatus = field(default_factory=AidingSourceStatus, repr=False)
     external_svs_data: AidingSourceStatus = field(default_factory=AidingSourceStatus, repr=False)
-    reserved: List[int] = field(default_factory=lambda: [0] * 10, repr=False)
+    reserved: list[int] = field(default_factory=lambda: [0] * 10, repr=False)
 
     ID = PacketID.filter_aiding_source_status
     LENGTH = 64

@@ -27,20 +27,20 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
 class VesselMotionPacket:
     """Packet 89 - Vessel Motion Packet"""
 
-    surge: List[float] = field(default_factory=lambda: [0, 0, 0, 0], repr=False)
-    sway: List[float] = field(default_factory=lambda: [0, 0, 0, 0], repr=False)
-    heave: List[float] = field(default_factory=lambda: [0, 0, 0, 0], repr=False)
+    surge: list[float] = field(default_factory=lambda: [0, 0, 0, 0], repr=False)
+    sway: list[float] = field(default_factory=lambda: [0, 0, 0, 0], repr=False)
+    heave: list[float] = field(default_factory=lambda: [0, 0, 0, 0], repr=False)
 
 
     ID = PacketID.vessel_motion

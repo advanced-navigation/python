@@ -27,11 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -62,7 +62,7 @@ class PacketsPeriodPacket:
 
     permanent: int = 0
     clear_existing_packets: int = 0
-    packet_periods: List[PacketPeriod] = field(default_factory=list, repr=False)
+    packet_periods: list[PacketPeriod] = field(default_factory=list, repr=False)
 
     ID = PacketID.packets_period
     MINIMUM_LENGTH = 2

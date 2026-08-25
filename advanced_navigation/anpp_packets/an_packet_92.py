@@ -27,11 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -83,10 +83,10 @@ class GNSSPositionVelocityTimePacket:
     gnss_position_velocity_time_bitfield: StatusGNSS = field(default_factory=StatusGNSS, repr=False) 
     posix_time_s: int = 0 
     posix_time_micros: int = 0 
-    position: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    position_standard_deviation: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    velocity_standard_deviation: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    position: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    position_standard_deviation: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    velocity: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    velocity_standard_deviation: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
     latency_micros: int = 0
 
     ID = PacketID.gnss_position_velocity_time

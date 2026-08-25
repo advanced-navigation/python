@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "advanced_navigation"
-version = "0.2.0"
+version = "0.2.1"
 description = "Advanced Navigation Python SDK"
 authors = [{ name = "Advanced Navigation", email = "ins-embedded-team@advancednavigation.com" }]
 keywords = ["advanced-navigation", "ins", "sdk"]
@@ -30,11 +30,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio",
-    "ruff",
-    "mypy",
-    "types-pyserial",
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "ruff==0.16.4",
+    "mypy==2.3.1",
+    "types-pyserial==3.5.0.20260712",
 ]
 
 [project.urls]

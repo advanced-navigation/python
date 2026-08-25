@@ -27,20 +27,25 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-import pytest
 import math
 from unittest.mock import patch
 
-from examples.packet_printers import (
-    print_packet,
-    get_device_specific_packet_obj,
-    handle_raw_an_packet
-)
+import pytest
+
 from advanced_navigation.anpp_packets.an_packet_3 import DeviceID
 from advanced_navigation.anpp_packets.an_packet_20 import SystemStatePacket
-from advanced_navigation.anpp_packets.an_packet_28 import RawSensorsPacket, RawSensorsPacketAdu
 from advanced_navigation.anpp_packets.an_packet_23 import StatusPacket, StatusPacketAdu2
+from advanced_navigation.anpp_packets.an_packet_28 import (
+    RawSensorsPacket,
+    RawSensorsPacketAdu,
+)
 from advanced_navigation.anpp_packets.an_packet_protocol import ANPacket
+from examples.packet_printers import (
+    get_device_specific_packet_obj,
+    handle_raw_an_packet,
+    print_packet,
+)
+
 
 class TestPacketPrinters:
 

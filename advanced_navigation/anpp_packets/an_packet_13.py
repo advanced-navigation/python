@@ -27,18 +27,17 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
+import struct
 from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import List
-import struct
-from .an_packets import PacketID
-from .an_packet_protocol import ANPacket
+
 from .an_packet_3 import DeviceID
+from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 class DeviceSubtype:
     """Marker class for all device subtype enums"""
-    pass
 
 class AirDataUnitDeviceSubtype(DeviceSubtype, IntEnum):
     """Air Data Unit Device Subtype"""
@@ -77,7 +76,7 @@ class ExtendedDeviceInformationPacket:
     software_version: int = 0
     device_id: DeviceID = DeviceID.unknown
     hardware_revision: int = 0
-    serial_number: List[int] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    serial_number: list[int] = field(default_factory=lambda: [0, 0, 0], repr=False)
     device_subtype: int = 0
     bootloader_version: int = 0
     navigation_filter_version: int = 0

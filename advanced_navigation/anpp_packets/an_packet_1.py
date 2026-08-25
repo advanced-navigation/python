@@ -27,20 +27,19 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
+from dataclasses import dataclass, field
 
-from typing import List
+from advanced_navigation.anpp_packets.an_packets import PacketID
 
 from .an_packet_protocol import ANPacket
-from advanced_navigation.anpp_packets.an_packets import PacketID
 
 
 @dataclass()
 class RequestPacket:
     """Packet 1 - Request Packet"""
 
-    requested_packets: List[PacketID] = field(default_factory=list, repr=False)
+    requested_packets: list[PacketID] = field(default_factory=list, repr=False)
 
     ID = PacketID.request
 
@@ -52,7 +51,7 @@ class RequestPacket:
         if not isinstance(self.requested_packets, list):
             self.requested_packets = [self.requested_packets]
 
-        data = bytes()
+        data = b""
         for packet in self.requested_packets:
             data += self._structure.pack(PacketID(packet).value)
 

@@ -28,16 +28,18 @@
 ################################################################################
 
 import pytest
+
+from advanced_navigation.an_devices import (
+    get_primary_baud_rate_array,
+    get_supported_packets,
+    has_magnetometer,
+    has_sub_type,
+    is_oem,
+)
 from advanced_navigation.anpp_packets.an_packet_3 import DeviceID
 from advanced_navigation.anpp_packets.an_packet_13 import CertusDeviceSubtype
 from advanced_navigation.anpp_packets.an_packets import PacketID
-from advanced_navigation.an_devices import (
-    has_magnetometer,
-    get_primary_baud_rate_array,
-    get_supported_packets,
-    has_sub_type,
-    is_oem
-)
+
 
 @pytest.mark.parametrize("device_id, expected", [
     (DeviceID.certus, True),

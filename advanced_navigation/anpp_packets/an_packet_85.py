@@ -27,21 +27,21 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
 class SensorTemperaturePacket:
     """Packet 85 - Sensor Temperature Packet"""
 
-    accelerometer_temperature: List[float] = field(
+    accelerometer_temperature: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
-    gyroscope_temperature: List[float] = field(
+    gyroscope_temperature: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
     magnetometer_temperature: float = 0

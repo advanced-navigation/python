@@ -29,28 +29,28 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import Enum, IntEnum
 import struct
-from typing import Dict
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+from enum import Enum, IntEnum
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 class FunctionType(Enum):
-    # Name                (GPIO1, GPIO2, AUX_TX, AUX_RX)
-    TRISTATE            = (True,  True,  True,  True)
-    DIGITAL_OUTPUT      = (True,  True,  True,  False)
-    DIGITAL_OUTPUT_ONLY = (True,  False, True,  False)
-    DIGITAL_INPUT       = (True,  True,  False, True)
-    ENCODER_INPUT       = (True,  True,  False, False)
-    FREQUENCY_INPUT     = (True,  True,  False, True)
-    GPIO2_ONLY          = (False, True,  False, False)
-    SERIAL_RECEIVE      = (False, True,  False, True)
-    SERIAL_TRANSMIT     = (True,  False, True,  False)
-    SERIAL              = (True,  True,  True,  True)
+    # Name                (id, GPIO1, GPIO2, AUX_TX, AUX_RX)
+    TRISTATE            = (0, True,  True,  True,  True)
+    DIGITAL_OUTPUT      = (1, True,  True,  True,  False)
+    DIGITAL_OUTPUT_ONLY = (2, True,  False, True,  False)
+    DIGITAL_INPUT       = (3, True,  True,  False, True)
+    ENCODER_INPUT       = (4, True,  True,  False, False)
+    FREQUENCY_INPUT     = (5, True,  True,  False, True)
+    GPIO2_ONLY          = (6, False, True,  False, False)
+    SERIAL_RECEIVE      = (7, False, True,  False, True)
+    SERIAL_TRANSMIT     = (8, True,  False, True,  False)
+    SERIAL              = (9, True,  True,  True,  True)
 
-    def __init__(self, gpio1, gpio2, aux_tx, aux_rx):
+    def __init__(self, _id, gpio1, gpio2, aux_tx, aux_rx):
         self.gpio1 = gpio1
         self.gpio2 = gpio2
         self.aux_tx = aux_tx
@@ -211,7 +211,7 @@ GPIO_FUNCTIONS = [
     GPIOFunction(FunctionId.lvs_output,                         FunctionType.SERIAL_TRANSMIT),
 ]
 
-BY_ID: Dict[int, GPIOFunction] = {f.value.value: f for f in GPIO_FUNCTIONS}
+BY_ID: dict[int, GPIOFunction] = {f.value.value: f for f in GPIO_FUNCTIONS}
 BY_ENUM = {f.value: f for f in GPIO_FUNCTIONS}
 
 
@@ -237,10 +237,18 @@ class GPIOConfigurationPacket:
     """Packet 188 - GPIO Configuration Packet"""
 
     permanent: int = 0
-    gpio1_function: GPIOFunction = GPIOFunction.from_id(FunctionId.inactive)
-    gpio2_function: GPIOFunction = GPIOFunction.from_id(FunctionId.inactive)
-    auxTx_function: GPIOFunction = GPIOFunction.from_id(FunctionId.inactive)
-    auxRx_function: GPIOFunction = GPIOFunction.from_id(FunctionId.inactive)
+    gpio1_function: GPIOFunction = field(
+        default_factory=lambda: GPIOFunction.from_id(FunctionId.inactive)
+    )
+    gpio2_function: GPIOFunction = field(
+        default_factory=lambda: GPIOFunction.from_id(FunctionId.inactive)
+    )
+    auxTx_function: GPIOFunction = field(
+        default_factory=lambda: GPIOFunction.from_id(FunctionId.inactive)
+    )
+    auxRx_function: GPIOFunction = field(
+        default_factory=lambda: GPIOFunction.from_id(FunctionId.inactive)
+    )
     gpio_voltage_selection: GPIOVoltage = GPIOVoltage.power_disabled
 
     ID = PacketID.gpio_configuration

@@ -27,23 +27,23 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
 class ExternalPositionVelocityPacket:
     """Packet 44 - External Position Velocity Packet"""
 
-    position: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    position_standard_deviation: List[float] = field(
+    position: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    velocity: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    position_standard_deviation: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
-    velocity_standard_deviation: List[float] = field(
+    velocity_standard_deviation: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
 

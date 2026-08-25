@@ -27,12 +27,12 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
-from .an_packet_protocol import ANPacket
+from dataclasses import dataclass, field
+
 from .an_packet_31 import SatelliteFrequencies
+from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -86,7 +86,7 @@ class ExtendedSatellitesPacket:
 
     total_number_of_packets: int = 0
     packet_number: int = 0
-    extended_satellites: List[ExtendedSatellite] = field(
+    extended_satellites: list[ExtendedSatellite] = field(
         default_factory=list, repr=False
     )
 

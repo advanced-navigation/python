@@ -1,12 +1,12 @@
 ################################################################################
 ##                                                                            ##
 ##                   Advanced Navigation Python Language SDK                  ##
-##                              an_packet_190.py                              ##
-##                     Copyright 2023, Advanced Navigation                    ##
+##                               an_packet_91.py                              ##
+##                     Copyright 2026, Advanced Navigation                    ##
 ##                                                                            ##
 ################################################################################
 #                                                                              #
-# Copyright (C) 2023 Advanced Navigation                                       #
+# Copyright (C) 2026 Advanced Navigation                                       #
 #                                                                              #
 # Permission is hereby granted, free of charge, to any person obtaining        #
 # a copy of this software and associated documentation files (the "Software"), #
@@ -29,38 +29,51 @@
 
 import struct
 from dataclasses import dataclass
-from enum import Enum
 
 from .an_packet_protocol import ANPacket
 from .an_packets import PacketID
 
 
-class MagneticCalibrationAction(Enum):
-    """Magnetic Calibration Action"""
-
-    cancel = 0
-    start_2d = 2
-    start_3d = 3
-    reset = 4
-
-
 @dataclass()
-class MagneticCalibrationConfigurationPacket:
-    """Packet 190 - Magnetic Calibration Configuration Packet"""
+class ExternalSVSDataPacket:
+    """Packet 91 - External SVS Data Packet"""
 
-    magnetic_calibration_action: MagneticCalibrationAction = (
-        MagneticCalibrationAction.cancel
-    )
+    pressure: float = 0
+    temperature: float = 0
+    velocity: float = 0
+    salinity: float = 0
+    density: float = 0
 
-    ID = PacketID.magnetic_calibration_configuration
-    LENGTH = 1
+    ID = PacketID.external_sound_velocity_sensor
+    LENGTH = 28
 
-    _structure = struct.Struct("<B")
+    _structure = struct.Struct("<fffff8x")
 
+    def decode(self, an_packet: ANPacket) -> int:
+        """Decode ANPacket to External SVS Data Packet
+        Returns 0 on success and 1 on failure"""
+        if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
+            (
+                self.pressure,
+                self.temperature,
+                self.velocity,
+                self.salinity,
+                self.density
+            ) = self._structure.unpack_from(an_packet.data)
+            return 0
+        else:
+            return 1
+        
     def encode(self) -> ANPacket:
-        """Encode Magnetic Calibration Configuration Packet to ANPacket
+        """Encode External SVS Data Packet to ANPacket
         Returns the ANPacket"""
-        data = self._structure.pack(self.magnetic_calibration_action.value)
+        data = self._structure.pack(
+            self.pressure,
+            self.temperature,
+            self.velocity,
+            self.salinity,
+            self.density
+        )
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

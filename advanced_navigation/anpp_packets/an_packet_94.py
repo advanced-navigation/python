@@ -27,11 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -101,7 +101,7 @@ class LvsLineOfSightPacketTelescope:
 class LvsLineOfSightPacket:
     """Packet 94 - LVS Line of Sight Packet"""
     unix_time_us: int = 0
-    telescope: List[LvsLineOfSightPacketTelescope] = field(
+    telescope: list[LvsLineOfSightPacketTelescope] = field(
         default_factory=lambda: [LvsLineOfSightPacketTelescope() for _ in range(4)], repr=False
     )
 

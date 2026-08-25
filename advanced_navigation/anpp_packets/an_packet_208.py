@@ -27,11 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -71,14 +71,14 @@ class AidingSourceConfigPacket2:
     permanent: int = 0
     enabled: AidingSourceConfig2Enabled = field(default_factory=AidingSourceConfig2Enabled, repr=False)
 
-    internal_depth_sensor_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_subsonus_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_subsonus_eulerbs: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_dvl_data_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_dvl_data_eulerbs: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_depth_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_USBL_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    reserved: List[float] = field(default_factory=lambda: [0.0]*39, repr=False)
+    internal_depth_sensor_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_subsonus_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_subsonus_eulerbs: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_dvl_data_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_dvl_data_eulerbs: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_depth_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_USBL_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    reserved: list[float] = field(default_factory=lambda: [0.0]*39, repr=False)
 
     ID = PacketID.aiding_source_config_2
     LENGTH = 243

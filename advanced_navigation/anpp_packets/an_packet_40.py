@@ -27,18 +27,18 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
 class QuaternionOrientationPacket:
     """Packet 40 - Quaternion Orientation Packet"""
 
-    orientation: List[float] = field(default_factory=lambda: [0, 0, 0, 0], repr=False)
+    orientation: list[float] = field(default_factory=lambda: [0, 0, 0, 0], repr=False)
 
     ID = PacketID.quaternion_orientation
     LENGTH = 16

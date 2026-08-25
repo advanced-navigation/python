@@ -26,9 +26,10 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER          #
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
-from enum import Enum
 import struct
 from dataclasses import dataclass
+from enum import Enum
+
 from .an_packet_protocol import ANPacket
 from .an_packets import PacketID
 

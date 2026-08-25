@@ -33,17 +33,24 @@ This example shows how to send & receive ANPP packets with an Advanced Navigatio
 device over serial or TCP using Python Asynchronous I/O (asyncio) Library
 """
 
-import asyncio
 import argparse
+import asyncio
 import datetime
 import logging
 
-from advanced_navigation.an_devices.an_device_async import AnDevice
-from advanced_navigation.an_devices import device_capabilities
-from advanced_navigation.anpp_packets.an_packet_3 import DeviceInformationPacket, DeviceID
-from advanced_navigation.anpp_packets.an_packet_13 import ExtendedDeviceInformationPacket
-from advanced_navigation.anpp_packets.an_packet_20 import SystemStatePacket
 from packet_printers import handle_raw_an_packet, print_packet
+
+from advanced_navigation.an_devices import device_capabilities
+from advanced_navigation.an_devices.an_device_async import AnDevice
+from advanced_navigation.anpp_packets.an_packet_3 import (
+    DeviceID,
+    DeviceInformationPacket,
+)
+from advanced_navigation.anpp_packets.an_packet_13 import (
+    ExtendedDeviceInformationPacket,
+)
+from advanced_navigation.anpp_packets.an_packet_20 import SystemStatePacket
+
 
 async def main():
     parser = argparse.ArgumentParser(description="Advanced Navigation Asynchronous Example")
@@ -56,6 +63,7 @@ async def main():
 
     device = AnDevice()
     device_id = DeviceID.unknown
+    log_file = None
 
     try:
         # Establish the connection asynchronously
@@ -72,8 +80,8 @@ async def main():
 
         # Create log file for received binary data from device
         # "xb" mode opens the file for exclusive creation (fails if it already exists) in binary mode
-        now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        log_file = open(f"DeviceLog_{now}.anpp", "xb")
+        now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+        log_file = await asyncio.to_thread(open, f"DeviceLog_{now}.anpp", "xb")
         print(f"Recording raw binary data to DeviceLog_{now}.anpp")
         print("-" * 40)
 
@@ -109,7 +117,7 @@ async def main():
         # Example 1: Use a specific packet type listener
         # Here we listen to the SystemStatePacket (20) and process its data
         async def system_state_handler(packet: SystemStatePacket):
-            print(f"[{datetime.datetime.now().isoformat()}] Received System State:")
+            print(f"[{datetime.datetime.now(datetime.timezone.utc).isoformat()}] Received System State:")
             print(f"  Latitude:  {packet.latitude:.7f}")
             print(f"  Longitude: {packet.longitude:.7f}")
             print(f"  Height:    {packet.height:.3f}")
@@ -139,6 +147,8 @@ async def main():
     except KeyboardInterrupt:
         print("\nExiting gracefully...")
     finally:
+        if log_file is not None:
+            log_file.close()
         device.close()
 
 if __name__ == "__main__":

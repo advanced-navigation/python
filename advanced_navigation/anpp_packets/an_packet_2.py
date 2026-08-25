@@ -27,11 +27,12 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
+import struct
 from dataclasses import dataclass
 from enum import Enum
-import struct
-from .an_packets import PacketID
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 class BootMode(Enum):

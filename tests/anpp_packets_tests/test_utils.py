@@ -29,6 +29,7 @@
 
 import importlib
 import inspect
+
 from advanced_navigation.anpp_packets import __all__ as anpp_all
 
 _packet_classes_cache = None
@@ -47,8 +48,7 @@ def get_obj_from_enum(packet_enum):
                         continue
                     _packet_classes_cache[obj.ID.value] = obj
                     
-        import advanced_navigation.anpp_packets.an_packet_0 as an_packet_0
-        import advanced_navigation.anpp_packets.an_packet_7 as an_packet_7
+        from advanced_navigation.anpp_packets import an_packet_0, an_packet_7
         _packet_classes_cache[0] = an_packet_0.AcknowledgePacket
         _packet_classes_cache[7] = an_packet_7.FileTransferFirstPacket
         

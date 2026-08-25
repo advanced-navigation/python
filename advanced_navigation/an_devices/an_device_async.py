@@ -30,29 +30,32 @@
 import asyncio
 import logging
 import struct
-from datetime import datetime
 import time
+from collections.abc import Awaitable, Callable
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any
 
+from advanced_navigation.an_devices.an_device_async_interface import AnDeviceInterface
 from advanced_navigation.anpp_packets.an_packet_0 import (
     AcknowledgePacket,
     AcknowledgeResult,
 )
-from advanced_navigation.anpp_packets.an_packet_2 import BootModePacket, BootMode
+from advanced_navigation.anpp_packets.an_packet_2 import BootMode, BootModePacket
 from advanced_navigation.anpp_packets.an_packet_3 import DeviceInformationPacket
 from advanced_navigation.anpp_packets.an_packet_8 import (
     FileTransferAcknowledgePacket,
     FileTransferResponse,
 )
 from advanced_navigation.anpp_packets.an_packet_9 import (
-    FileTransferFirstPacket,
-    FileTransferOngoingPacket,
     FileTransferDataEncoding,
-    FileTransferMetadataType,
+    FileTransferFirstPacket,
     FileTransferLimits,
+    FileTransferMetadataType,
+    FileTransferOngoingPacket,
 )
-from advanced_navigation.an_devices.an_device_async_interface import AnDeviceInterface
+
+logger = logging.getLogger(__name__)
 
 
 class AnDevice(AnDeviceInterface):
@@ -82,9 +85,9 @@ class AnDevice(AnDeviceInterface):
             device_info = await self.request(DeviceInformationPacket)
             if device_info is not None:
                 return
-        raise Exception("Device offline")
+        raise TimeoutError("Device offline")
 
-    async def get_boot_mode(self) -> Optional[BootMode]:
+    async def get_boot_mode(self) -> BootMode | None:
         """
         Retrieves the current boot mode of the device.
 
@@ -109,7 +112,7 @@ class AnDevice(AnDeviceInterface):
         """
         for attempt in range(3):
             if await self.get_boot_mode() == boot_mode:
-                logging.info(f"Already in boot mode {boot_mode}")
+                logger.info("Already in boot mode %s", boot_mode)
                 return
             packet = BootModePacket()
             packet.boot_mode = boot_mode
@@ -119,36 +122,45 @@ class AnDevice(AnDeviceInterface):
                     await asyncio.sleep(0.5)
                     current_boot_mode = await self.get_boot_mode()
                     if current_boot_mode == boot_mode:
-                        logging.info(f"Successfully entered boot mode {boot_mode}")
+                        logger.info("Successfully entered boot mode %s", boot_mode)
                         return
                 elif ack.acknowledge_result == AcknowledgeResult.failure_not_ready:
-                    logging.debug(
-                        f"System not ready. Retrying entering boot mode {boot_mode}"
+                    logger.debug(
+                        "System not ready. Retrying entering boot mode %s", boot_mode
                     )
-                    pass
                 else:
-                    raise Exception(f"Unable to set bootmode: {ack.acknowledge_result}")
+                    raise RuntimeError(
+                        f"Unable to set bootmode: {ack.acknowledge_result}"
+                    )
             await asyncio.sleep(0.5)
-        raise Exception("Unable to set bootmode: timeout")
+        raise TimeoutError("Unable to set bootmode: timeout")
 
-    async def write_firmware(self, file_path: Path) -> bool:
+    async def write_firmware(
+        self,
+        file_path: Path,
+        on_progress: Callable[[int, int], Awaitable[None]] | None = None,
+    ) -> bool:
         """
         Writes firmware to the device from a file.
 
         Args:
             file_path (Path): Path to the firmware file (.anfw).
+            on_progress (Optional[Callable[[int, int], Awaitable[None]]]): Optional async callback
+                invoked as ``await on_progress(bytes_sent, total_bytes)`` where both values are
+                measured against the firmware payload (the metadata header is excluded). Fires
+                once at 0 before the transfer starts, after each acknowledged fragment, and once
+                at ``total_bytes`` on completion.
 
         Raises:
             Exception: If firmware validation fails or transfer fails.
         """
         AN_FIRMWARE_METADATA_SIZE = 48
-        logging.info(f"Write firmware: {file_path}")
+        logger.info("Write firmware: %s", file_path)
 
         if not self.validate_firmware(file_path):
-            raise Exception("Invalid anfw file")
+            raise ValueError("Invalid anfw file")
 
-        with open(file_path, "rb") as f:
-            file_data = f.read()
+        file_data = await asyncio.to_thread(Path(file_path).read_bytes)
 
         # Generate a unique id for this file transfer
         transfer_id = int(time.time()) & 0x7FFFFFFF
@@ -162,6 +174,7 @@ class AnDevice(AnDeviceInterface):
             FileTransferDataEncoding.aes256,
             FileTransferMetadataType.an_firmware,
             metadata,
+            on_progress=on_progress,
         )
         return True
 
@@ -176,7 +189,7 @@ class AnDevice(AnDeviceInterface):
             bool: True if the file is a valid ANFW file, False otherwise.
         """
         AN_FIRMWARE_HEADER_LENGTH = 16
-        logging.debug(f"Validating Firmware: {file_path}")
+        logger.debug("Validating Firmware: %s", file_path)
         try:
             with open(file_path, "rb") as f:
                 header = f.read(AN_FIRMWARE_HEADER_LENGTH)
@@ -188,16 +201,18 @@ class AnDevice(AnDeviceInterface):
                 timestamp = struct.unpack("<I", header[12:16])[0]
 
                 if identifier == "ANFW":
-                    date_str = datetime.fromtimestamp(timestamp).strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    )
-                    logging.info(
-                        f"Valid ANFW File found - Version: {version} | Date: {date_str}"
+                    date_str = datetime.fromtimestamp(
+                        timestamp, tz=timezone.utc
+                    ).strftime("%Y-%m-%d %H:%M:%S")
+                    logger.info(
+                        "Valid ANFW File found - Version: %s | Date: %s",
+                        version,
+                        date_str,
                     )
                     return True
 
-        except Exception as e:
-            logging.warning(f"Firmware validation error: {e}")
+        except (OSError, struct.error, UnicodeDecodeError) as e:
+            logger.warning("Firmware validation error: %s", e)
         return False
 
     async def transfer_file(
@@ -207,6 +222,7 @@ class AnDevice(AnDeviceInterface):
         data_encoding: FileTransferDataEncoding,
         metadata_type: FileTransferMetadataType,
         metadata: bytes,
+        on_progress: Callable[[int, int], Awaitable[None]] | None = None,
     ):
         """
         Transfers a file to the device using the ANPP file transfer protocol.
@@ -217,23 +233,37 @@ class AnDevice(AnDeviceInterface):
             data_encoding (FileTransferDataEncoding): Encoding of the data.
             metadata_type (FileTransferMetadataType): Type of metadata.
             metadata (bytes): Metadata bytes.
+            on_progress (Optional[Callable[[int, int], Awaitable[None]]]): Optional async callback
+                invoked as ``await on_progress(bytes_sent, total_bytes)`` where both values are
+                measured against ``file_data`` (the metadata is excluded).
 
         Raises:
             Exception: If the transfer fails, times out, or receives an error response.
         """
         PACKET_RETRY_COUNT = 3
 
-        logging.info(f"Transfer file start - Length: {len(file_data)}")
+        logger.info("Transfer file start - Length: %s", len(file_data))
 
         retry = PACKET_RETRY_COUNT
 
         max_data_size = FileTransferLimits.max_data_size.value
 
         if len(metadata) > max_data_size:
-            raise Exception(f"Metadata to long {len(metadata)} > {max_data_size}")
+            raise ValueError(f"Metadata to long {len(metadata)} > {max_data_size}")
 
         data_index = 0
         total_length = len(metadata) + len(file_data)
+        payload_total = len(file_data)
+
+        async def _emit(sent_index: int):
+            if on_progress is None:
+                return
+            try:
+                await on_progress(max(0, sent_index - len(metadata)), payload_total)
+            except Exception as e:  # noqa: BLE001
+                logger.warning("File transfer - progress callback raised: %s", e)
+
+        await _emit(0)
 
         while data_index < total_length:
             packet: Any
@@ -265,7 +295,7 @@ class AnDevice(AnDeviceInterface):
 
             if response and isinstance(response, FileTransferAcknowledgePacket):
                 if response.unique_id != transfer_id:
-                    raise Exception(
+                    raise ValueError(
                         f"Unexpected transfer id: {response.unique_id} expecting {transfer_id}"
                     )
 
@@ -273,26 +303,30 @@ class AnDevice(AnDeviceInterface):
                     response.response_code
                     == FileTransferResponse.completed_successfully
                 ):
-                    logging.info("File transfer complete")
+                    logger.info("File transfer complete")
+                    await _emit(total_length)
                     return 0
                 elif response.response_code == FileTransferResponse.ready:
                     data_index += len(packet.packet_data)
                     retry = PACKET_RETRY_COUNT
+                    await _emit(data_index)
                 elif response.response_code == FileTransferResponse.index_mismatch:
-                    logging.warning(
-                        f"File transfer - index mismatch. Change index {data_index}->{response.data_index}"
+                    logger.warning(
+                        "File transfer - index mismatch. Change index %s->%s",
+                        data_index,
+                        response.data_index,
                     )
                     data_index = response.data_index
                 else:
-                    raise Exception(
+                    raise RuntimeError(
                         f"Device returned error code: {response.response_code}"
                     )
             else:
-                logging.warning(
-                    f"File transfer - unable to send fragment at {data_index}"
+                logger.warning(
+                    "File transfer - unable to send fragment at %s", data_index
                 )
                 retry = retry - 1
                 if retry <= 0:
-                    raise Exception(
+                    raise TimeoutError(
                         f"File transfer - unable to send fragment at {data_index}"
                     )

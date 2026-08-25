@@ -29,14 +29,18 @@
 
 import asyncio
 import copy
-import serial_asyncio  # type: ignore
 import logging
-from typing import Callable, Dict, Any, Type, Optional, List, Tuple
+from collections.abc import Callable
+from typing import Any
 
-from advanced_navigation.anpp_packets.an_packets import PacketID
-from advanced_navigation.anpp_packets.an_packet_protocol import ANDecoder, ANPacket
+import serial_asyncio  # type: ignore
+
 from advanced_navigation.anpp_packets.an_packet_0 import AcknowledgePacket
 from advanced_navigation.anpp_packets.an_packet_1 import RequestPacket
+from advanced_navigation.anpp_packets.an_packet_protocol import ANDecoder, ANPacket
+from advanced_navigation.anpp_packets.an_packets import PacketID
+
+logger = logging.getLogger(__name__)
 
 
 class AnDeviceInterfaceProtocol(asyncio.Protocol):
@@ -59,7 +63,7 @@ class AnDeviceInterfaceProtocol(asyncio.Protocol):
         self._receive_queue: asyncio.Queue[ANPacket] = asyncio.Queue()
         self._on_packet_received = on_packet_received
         self._on_connection_state_change = on_connection_state_change
-        self._transport: Optional[asyncio.Transport] = None
+        self._transport: asyncio.Transport | None = None
         self._decoder = ANDecoder()
         self._worker_task = asyncio.create_task(self._worker())
 
@@ -72,8 +76,8 @@ class AnDeviceInterfaceProtocol(asyncio.Protocol):
                 an_packet = await self._receive_queue.get()
                 await self._on_packet_received(an_packet)
                 self._receive_queue.task_done()
-            except Exception as e:
-                logging.error(f"Worker task error: {e}")
+            except Exception as e:  # noqa: BLE001
+                logger.error("Worker task error: %s", e)
 
     def connection_made(self, transport):
         """
@@ -83,7 +87,7 @@ class AnDeviceInterfaceProtocol(asyncio.Protocol):
             transport (asyncio.Transport): The transport associated with the connection.
         """
         self._transport = transport
-        logging.info("Connection established!")
+        logger.info("Connection established!")
         if self._on_connection_state_change:
             asyncio.create_task(self._on_connection_state_change(True))
 
@@ -119,7 +123,7 @@ class AnDeviceInterfaceProtocol(asyncio.Protocol):
         Args:
             exc (Exception): The exception that caused the connection loss, or None if closed cleanly.
         """
-        logging.info(f"Connection lost: {exc}")
+        logger.info("Connection lost: %s", exc)
         self._transport = None
         if self._on_connection_state_change:
             asyncio.create_task(self._on_connection_state_change(False))
@@ -134,11 +138,11 @@ class AnDeviceInterface:
         """
         Initializes the AnDeviceInterface.
         """
-        self._protocol: Optional[AnDeviceInterfaceProtocol] = None
-        self._callbacks: Dict[PacketID, List[Tuple[Callable, Type]]] = {}
-        self._raw_callbacks: List[Callable] = []
+        self._protocol: AnDeviceInterfaceProtocol | None = None
+        self._callbacks: dict[PacketID, list[tuple[Callable, type]]] = {}
+        self._raw_callbacks: list[Callable] = []
 
-    def register_callback(self, packet_type: Type, callback: Callable):
+    def register_callback(self, packet_type: type, callback: Callable):
         """
         Registers a callback for a specific packet type.
 
@@ -210,7 +214,6 @@ class AnDeviceInterface:
         Args:
             connected_state (bool): True if connected, False otherwise.
         """
-        pass
 
     async def _handle_recv_packet(self, an_packet: ANPacket):
         """
@@ -223,13 +226,13 @@ class AnDeviceInterface:
         for callback in self._raw_callbacks:
             try:
                 await callback(an_packet)
-            except Exception as e:
-                logging.warning(f"Failed to handle raw callback: {e}")
+            except Exception as e:  # noqa: BLE001
+                logger.warning("Failed to handle raw callback: %s", e)
 
         try:
             packet_id = PacketID(an_packet.id)
         except ValueError:
-            logging.warning(f"Received unknown packet ID: {an_packet.id}")
+            logger.warning("Received unknown packet ID: %s", an_packet.id)
             return
 
         if packet_id in self._callbacks:
@@ -241,16 +244,16 @@ class AnDeviceInterface:
                         if packet.decode(an_packet) == 0:
                             await callback(packet)
                         else:
-                            logging.warning(f"Failed to decode packet {packet_id}")
-                except Exception as e:
-                    logging.warning(f"Failed to handle packet {packet_id}: {e}")
+                            logger.warning("Failed to decode packet %s", packet_id)
+                except Exception as e:  # noqa: BLE001
+                    logger.warning("Failed to handle packet %s: %s", packet_id, e)
         else:
             # We don't have a specific handler for this packet ID
             if not self._raw_callbacks:
-                logging.debug(f"Packet {an_packet.id} not handled")
+                logger.debug("Packet %s not handled", an_packet.id)
 
     # System Packets
-    async def request(self, packet_type: Any, timeout: float = 1.0) -> Optional[Any]:
+    async def request(self, packet_type: Any, timeout: float = 1.0) -> Any | None:
         """
         Request a packet and wait for the response.
 
@@ -273,7 +276,7 @@ class AnDeviceInterface:
         try:
             self.send_request_packet(packet_type.ID)
             return await asyncio.wait_for(future, timeout)
-        except Exception:
+        except TimeoutError:
             return None
         finally:
             if packet_type.ID in self._callbacks:
@@ -286,9 +289,9 @@ class AnDeviceInterface:
     async def send(
         self,
         send_packet: Any,
-        expected_response: Optional[Any] = AcknowledgePacket,
+        expected_response: Any | None = AcknowledgePacket,
         timeout: float = 1.0,
-    ) -> Optional[AcknowledgePacket]:
+    ) -> AcknowledgePacket | None:
         """
         Sends a packet and optionally waits for an acknowledgement or specific response.
 
@@ -304,14 +307,14 @@ class AnDeviceInterface:
         future = loop.create_future()
 
         async def one_shot_callback(recev_packet):
-            if isinstance(recev_packet, AcknowledgePacket):
-                # Does this ack belong to the sent packet?
-                if recev_packet.packet_id == send_packet.ID:
-                    if not future.done():
-                        future.set_result(recev_packet)
-            else:
-                if not future.done():
-                    future.set_result(recev_packet)
+            matching_ack = (
+                isinstance(recev_packet, AcknowledgePacket)
+                and recev_packet.packet_id == send_packet.ID
+            )
+            if (
+                matching_ack or not isinstance(recev_packet, AcknowledgePacket)
+            ) and not future.done():
+                future.set_result(recev_packet)
 
         if expected_response is not None:
             self.register_callback(expected_response, one_shot_callback)
@@ -323,8 +326,8 @@ class AnDeviceInterface:
             if expected_response is not None:
                 return await asyncio.wait_for(future, timeout)
             return None
-        except Exception as ex:
-            logging.warning(f"Failed to send packet: {ex}")
+        except (TimeoutError, OSError) as ex:
+            logger.warning("Failed to send packet: %s", ex)
             return None
         finally:
             if (

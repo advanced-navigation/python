@@ -27,13 +27,13 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-import pytest
 import importlib
 import inspect
 
-from advanced_navigation.anpp_packets.an_packet_protocol import ANDecoder
-from advanced_navigation.anpp_packets import __all__ as anpp_all
+import pytest
 
+from advanced_navigation.anpp_packets import __all__ as anpp_all
+from advanced_navigation.anpp_packets.an_packet_protocol import ANDecoder
 
 packet_classes = []
 for module_name in anpp_all:

@@ -32,19 +32,27 @@ This example shows how to send & receive ANPP packets with an Advanced Navigatio
 device over serial or TCP using Python Synchronous I/O Library
 """
 
-import time
 import argparse
-import socket
 import datetime
-import serial
-import serial.serialutil as serialutil
 import logging
-from advanced_navigation.an_devices import device_capabilities
-from advanced_navigation.anpp_packets.an_packet_protocol import ANDecoder
-from advanced_navigation.anpp_packets.an_packet_1 import RequestPacket
-from advanced_navigation.anpp_packets.an_packet_3 import DeviceInformationPacket, DeviceID
-from advanced_navigation.anpp_packets.an_packet_13 import ExtendedDeviceInformationPacket
+import socket
+import time
+
+import serial
 from packet_printers import handle_raw_an_packet, print_packet
+from serial import serialutil
+
+from advanced_navigation.an_devices import device_capabilities
+from advanced_navigation.anpp_packets.an_packet_1 import RequestPacket
+from advanced_navigation.anpp_packets.an_packet_3 import (
+    DeviceID,
+    DeviceInformationPacket,
+)
+from advanced_navigation.anpp_packets.an_packet_13 import (
+    ExtendedDeviceInformationPacket,
+)
+from advanced_navigation.anpp_packets.an_packet_protocol import ANDecoder
+
 
 def read_from_socket(sock: socket.socket) -> bytes:
     try:
@@ -52,7 +60,7 @@ def read_from_socket(sock: socket.socket) -> bytes:
         # Since we set conn.settimeout(1.0), this will raise an exception if no data 
         # is received within 1 second, returning empty bytes to continue the polling loop.
         return sock.recv(1024)
-    except Exception:
+    except (TimeoutError, OSError):
         return b""
 
 def read_from_serial(ser: serial.Serial) -> bytes:
@@ -62,7 +70,7 @@ def read_from_serial(ser: serial.Serial) -> bytes:
         if ser.in_waiting > 0:
             return ser.read(ser.in_waiting)
         return b""
-    except Exception:
+    except serial.SerialException:
         return b""
 
 def main():
@@ -102,100 +110,100 @@ def main():
 
         # Create log file for received binary data from device
         # "xb" mode opens the file for exclusive creation (fails if it already exists) in binary mode
-        now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        log_file = open(f"DeviceLog_{now}.anpp", "xb")
-        print(f"Recording raw binary data to DeviceLog_{now}.anpp")
+        now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+        with open(f"DeviceLog_{now}.anpp", "xb") as log_file:
+            print(f"Recording raw binary data to DeviceLog_{now}.anpp")
 
-        # Request Device Information to understand what hardware we are talking to
-        # In synchronous mode, we manually craft a RequestPacket to ask for it
-        request = RequestPacket()
-        request.requested_packets = [DeviceInformationPacket.ID]
-        
-        def send_request():
-            if is_tcp and isinstance(conn, socket.socket):
-                conn.sendall(request.encode().bytes())
-            elif not is_tcp and isinstance(conn, serial.Serial):
-                conn.write(request.encode().bytes())
-                
-        send_request()
-        last_request_time = time.time()
+            # Request Device Information to understand what hardware we are talking to
+            # In synchronous mode, we manually craft a RequestPacket to ask for it
+            request = RequestPacket()
+            request.requested_packets = [DeviceInformationPacket.ID]
 
-        # --- Example Configuration (Optional) ---
-        # If you want to send a configuration packet to the device, follow this example:
-        # from advanced_navigation.anpp_packets.an_packet_184 import SensorRangesPacket, AccelerometerRange, GyroscopeRange, MagnetometerRange
-        # config_packet = SensorRangesPacket()
-        # config_packet.permanent = 1
-        # config_packet.accelerometers_range = AccelerometerRange.accelerometer_range_4g
-        # config_packet.gyroscopes_range = GyroscopeRange.gyroscope_range_500dps
-        # config_packet.magnetometers_range = MagnetometerRange.magnetometer_range_8g
-        # if is_tcp:
-        #     conn.sendall(config_packet.encode().bytes())
-        # else:
-        #     conn.write(config_packet.encode().bytes())
-        # ----------------------------------------
+            def send_request():
+                if is_tcp and isinstance(conn, socket.socket):
+                    conn.sendall(request.encode().bytes())
+                elif not is_tcp and isinstance(conn, serial.Serial):
+                    conn.write(request.encode().bytes())
 
-        # Enter polling loop
-        print("Listening for packets... (Press Ctrl+C to exit)\n")
-        print("-" * 40)
-        
-        while True:
-            # Periodically retry asking for device information if we haven't received it
-            if device_id == DeviceID.unknown and time.time() - last_request_time > 1.0:
-                send_request()
-                last_request_time = time.time()
+            send_request()
+            last_request_time = time.time()
 
-            # Read chunks of bytes
-            if is_tcp and isinstance(conn, socket.socket):
-                raw_data = read_from_socket(conn)
-            elif not is_tcp and isinstance(conn, serial.Serial):
-                raw_data = read_from_serial(conn)
-            else:
-                raw_data = b""
+            # --- Example Configuration (Optional) ---
+            # If you want to send a configuration packet to the device, follow this example:
+            # from advanced_navigation.anpp_packets.an_packet_184 import SensorRangesPacket, AccelerometerRange, GyroscopeRange, MagnetometerRange
+            # config_packet = SensorRangesPacket()
+            # config_packet.permanent = 1
+            # config_packet.accelerometers_range = AccelerometerRange.accelerometer_range_4g
+            # config_packet.gyroscopes_range = GyroscopeRange.gyroscope_range_500dps
+            # config_packet.magnetometers_range = MagnetometerRange.magnetometer_range_8g
+            # if is_tcp:
+            #     conn.sendall(config_packet.encode().bytes())
+            # else:
+            #     conn.write(config_packet.encode().bytes())
+            # ----------------------------------------
 
-            if raw_data:
-                # Record in log file the raw binary of ANPP packets
-                log_file.write(raw_data)
-                
-                # Add raw data to our decoder buffer
-                decoder.add_data(raw_data)
+            # Enter polling loop
+            print("Listening for packets... (Press Ctrl+C to exit)\n")
+            print("-" * 40)
 
-            # Attempt to pop fully assembled ANPackets off the internal buffer
-            # decoder.decode() returns None if there is not enough data yet to form a complete packet
             while True:
-                an_packet = decoder.decode()
-                if an_packet is None:
-                    break
+                # Periodically retry asking for device information if we haven't received it
+                if device_id == DeviceID.unknown and time.time() - last_request_time > 1.0:
+                    send_request()
+                    last_request_time = time.time()
 
-                # The first packet we get should be the DeviceInformationPacket
-                if an_packet.id == DeviceInformationPacket.ID.value and device_id == DeviceID.unknown:
-                    info_packet = DeviceInformationPacket()
-                    if info_packet.decode(an_packet) == 0:
-                        device_id = info_packet.device_id
-                        print_packet(info_packet)
-                        print("-" * 40)
+                # Read chunks of bytes
+                if is_tcp and isinstance(conn, socket.socket):
+                    raw_data = read_from_socket(conn)
+                elif not is_tcp and isinstance(conn, serial.Serial):
+                    raw_data = read_from_serial(conn)
+                else:
+                    raw_data = b""
 
-                        # Example of using device capabilities
-                        # If the device supports subtypes, we can also request the Extended Device Information packet
-                        if device_capabilities.has_sub_type(device_id):
-                            ext_req = RequestPacket()
-                            ext_req.requested_packets = [ExtendedDeviceInformationPacket.ID]
-                            if is_tcp and isinstance(conn, socket.socket):
-                                conn.sendall(ext_req.encode().bytes())
-                            elif not is_tcp and isinstance(conn, serial.Serial):
-                                conn.write(ext_req.encode().bytes())
-                    continue
+                if raw_data:
+                    # Record in log file the raw binary of ANPP packets
+                    log_file.write(raw_data)
 
-                # Wait for the extended info packet if we requested it
-                if an_packet.id == ExtendedDeviceInformationPacket.ID.value:
-                    ext_info = ExtendedDeviceInformationPacket()
-                    if ext_info.decode(an_packet) == 0:
-                        print_packet(ext_info)
-                        print("-" * 40)
-                    continue
+                    # Add raw data to our decoder buffer
+                    decoder.add_data(raw_data)
 
-                # Pass everything else to the packet printer
-                handle_raw_an_packet(an_packet, device_id)
-                print("-" * 40)
+                # Attempt to pop fully assembled ANPackets off the internal buffer
+                # decoder.decode() returns None if there is not enough data yet to form a complete packet
+                while True:
+                    an_packet = decoder.decode()
+                    if an_packet is None:
+                        break
+
+                    # The first packet we get should be the DeviceInformationPacket
+                    if an_packet.id == DeviceInformationPacket.ID.value and device_id == DeviceID.unknown:
+                        info_packet = DeviceInformationPacket()
+                        if info_packet.decode(an_packet) == 0:
+                            device_id = info_packet.device_id
+                            print_packet(info_packet)
+                            print("-" * 40)
+
+                            # Example of using device capabilities
+                            # If the device supports subtypes, we can also request the Extended Device Information packet
+                            if device_capabilities.has_sub_type(device_id):
+                                ext_req = RequestPacket()
+                                ext_req.requested_packets = [ExtendedDeviceInformationPacket.ID]
+                                if is_tcp and isinstance(conn, socket.socket):
+                                    conn.sendall(ext_req.encode().bytes())
+                                elif not is_tcp and isinstance(conn, serial.Serial):
+                                    conn.write(ext_req.encode().bytes())
+                        continue
+
+                    # Wait for the extended info packet if we requested it
+                    if an_packet.id == ExtendedDeviceInformationPacket.ID.value:
+                        ext_info = ExtendedDeviceInformationPacket()
+                        if ext_info.decode(an_packet) == 0:
+                            print_packet(ext_info)
+                            print("-" * 40)
+                        continue
+
+                    # Pass everything else to the packet printer
+                    handle_raw_an_packet(an_packet, device_id)
+                    print("-" * 40)
 
     except KeyboardInterrupt:
         print("\nExiting gracefully...")

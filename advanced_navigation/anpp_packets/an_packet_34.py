@@ -27,18 +27,18 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
 class UTMPositionPacket:
     """Packet 34 - UTM Position Packet"""
 
-    position: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    position: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
     zone_number: int = 0
     zone_character: int = 0
 

@@ -27,14 +27,14 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-import pytest
 import os
 from pathlib import Path
+
+import pytest
 
 from advanced_navigation.anpp_packets.an_packet_protocol import ANDecoder
 from advanced_navigation.anpp_packets.an_packets import PacketID
 from tests.anpp_packets_tests.test_utils import get_obj_from_enum
-
 
 _DECODED_PACKET_IDS = None
 

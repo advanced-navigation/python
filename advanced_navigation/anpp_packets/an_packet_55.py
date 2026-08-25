@@ -27,18 +27,17 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from typing import Optional
 from dataclasses import dataclass, field
 
-from .an_packets import PacketID
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
 class RTCMCorrectionsPacket:
     """Packet 55 - RTCM Corrections Packet"""
 
-    packet_data: Optional[bytes] = field(default_factory=bytes, repr=False)
+    packet_data: bytes | None = field(default_factory=bytes, repr=False)
 
     ID = PacketID.rtcm_corrections
 
@@ -49,7 +48,7 @@ class RTCMCorrectionsPacket:
         an_packet.encode(
             self.ID,
             len(self.packet_data) if self.packet_data is not None else 0,
-            self.packet_data if self.packet_data is not None else bytes(),
+            self.packet_data if self.packet_data is not None else b"",
         )
 
         return an_packet

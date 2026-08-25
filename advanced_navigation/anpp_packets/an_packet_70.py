@@ -27,11 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass
@@ -60,9 +60,9 @@ class RawDVLDataPacket:
     unix_time: int = 0
     microseconds: int = 0
     status: RawDVLDataFlags = field(default_factory=RawDVLDataFlags, repr=False)
-    bottom_velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    bottom_velocity: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
     bottom_velocity_standard_deviation: float = 0
-    water_velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    water_velocity: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
     water_velocity_standard_deviation: float = 0
     water_velocity_layer_depth: float = 0
     depth: float = 0

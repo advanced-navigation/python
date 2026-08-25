@@ -27,11 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -39,7 +39,7 @@ class LvsAlignmentAndOffset:
     """LVS Alignment and Offset Sub-structure"""
     azimuth_st: float = 0.0
     elevation_st: float = 0.0
-    rTSs: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
+    rTSs: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
 
     # <    : Little-endian
     # 5f   : 5 floats (4 bytes each = 20 bytes total)
@@ -64,7 +64,7 @@ class LvsAlignmentAndOffset:
 @dataclass()
 class LvsLineOfSightConfiguration:
     """LVS Line of Sight Configuration"""
-    telescope: List[LvsAlignmentAndOffset] = field(
+    telescope: list[LvsAlignmentAndOffset] = field(
         default_factory=lambda: [LvsAlignmentAndOffset() for _ in range(4)], repr=False
     )
 

@@ -27,18 +27,18 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
 class AngularAccelerationPacket:
     """Packet 43 - Angular Acceleration Packet"""
 
-    angular_acceleration: List[float] = field(
+    angular_acceleration: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
 

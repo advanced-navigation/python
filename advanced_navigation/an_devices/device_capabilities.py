@@ -27,9 +27,13 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from typing import List
+
 from ..anpp_packets.an_packet_3 import DeviceID
-from ..anpp_packets.an_packet_13 import DeviceSubtype, CertusDeviceSubtype, CertusMiniDeviceSubtype
+from ..anpp_packets.an_packet_13 import (
+    CertusDeviceSubtype,
+    CertusMiniDeviceSubtype,
+    DeviceSubtype,
+)
 
 __all__ = [
     'get_auxiliary_baud_rate_array',
@@ -37,9 +41,9 @@ __all__ = [
     'get_default_baud_rate',
     'get_gpio_baud_rate_array',
     'get_primary_baud_rate_array',
+    'has_4mbaud_serial',
     'has_10mbaud_serial',
     'has_2400baud_serial',
-    'has_4mbaud_serial',
     'has_aiding_source_configuration',
     'has_anfw_v2',
     'has_antenna_connection_reporting',
@@ -150,7 +154,7 @@ INS_DEVICES = {
     DeviceID.spatial_fog_dual
 }
 
-def get_auxiliary_baud_rate_array(device_id: DeviceID) -> List[str]:
+def get_auxiliary_baud_rate_array(device_id: DeviceID) -> list[str]:
     """Get list of available auxiliary baudrates"""
     min_baud = 2400 if has_2400baud_serial(device_id) else 4800
     
@@ -165,7 +169,7 @@ def get_auxiliary_baud_rate_array(device_id: DeviceID) -> List[str]:
         
     return get_baud_rate_array(min_baud, max_baud)
 
-def get_baud_rate_array(minimum_baud: int, maximum_baud: int) -> List[str]:
+def get_baud_rate_array(minimum_baud: int, maximum_baud: int) -> list[str]:
     """Trim the default baudrate array to values between a minimum and a maximum"""
     default_baud_rates = [
         "2400",
@@ -193,12 +197,12 @@ def get_default_baud_rate(device_id: DeviceID) -> int:
     """Get device default baudrate"""
     return 115200
 
-def get_gpio_baud_rate_array(device_id: DeviceID) -> List[str]:
+def get_gpio_baud_rate_array(device_id: DeviceID) -> list[str]:
     """Get list of available baudrates for the GPIO port"""
     min_baud = 2400 if has_2400baud_serial(device_id) else 4800
     return get_baud_rate_array(min_baud, 250000)
 
-def get_primary_baud_rate_array(device_id: DeviceID) -> List[str]:
+def get_primary_baud_rate_array(device_id: DeviceID) -> list[str]:
     """Get list of available primary baudrates"""
     min_baud = 2400 if has_2400baud_serial(device_id) else 4800
     
@@ -1129,10 +1133,14 @@ def is_gnss_firmware_update_allowed(gnss_manufacturer_id: int, gnss_receiver_mod
 
     if gnss_manufacturer_id == GNSS_MANUFACTURER_TRIMBLE:
         return True
-    if gnss_manufacturer_id == GNSS_MANUFACTURER_ADNAV:
-        if gnss_receiver_model in (GNSS_RECEIVER_MODEL_ADNAV_ARIES_GC2, GNSS_RECEIVER_MODEL_ADNAV_ARIES_SKYTRAQ_PX1172RH):
-            return True
-    return False
+    return (
+        gnss_manufacturer_id == GNSS_MANUFACTURER_ADNAV
+        and gnss_receiver_model
+        in (
+            GNSS_RECEIVER_MODEL_ADNAV_ARIES_GC2,
+            GNSS_RECEIVER_MODEL_ADNAV_ARIES_SKYTRAQ_PX1172RH,
+        )
+    )
 
 def is_ins(device_id: DeviceID) -> bool:
     return device_id in INS_DEVICES

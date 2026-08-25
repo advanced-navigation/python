@@ -27,24 +27,24 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
 class PoseInitialisationPacket:
     """Pose Initialisation Packet"""
 
-    rBOe_llh: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
-    rBOn_SD: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
-    eulernb: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
-    eulernb_SD: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
-    dErBOn: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
-    dErBOn_SD: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
-    reserved: List[int] = field(default_factory=lambda: [0] * 24, repr=False)
+    rBOe_llh: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
+    rBOn_SD: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
+    eulernb: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
+    eulernb_SD: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
+    dErBOn: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
+    dErBOn_SD: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0], repr=False)
+    reserved: list[int] = field(default_factory=lambda: [0] * 24, repr=False)
 
     ID = PacketID.pose_initialisation 
     LENGTH = 108

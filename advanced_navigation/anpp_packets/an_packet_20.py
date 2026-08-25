@@ -27,12 +27,12 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
+import struct
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List
-import struct
-from .an_packets import PacketID
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 class GNSSFixType(Enum):
@@ -137,14 +137,14 @@ class SystemStatePacket:
     latitude: float = 0
     longitude: float = 0
     height: float = 0
-    velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    body_acceleration: List[float] = field(
+    velocity: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    body_acceleration: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
     g_force: float = 0
-    orientation: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    angular_velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    standard_deviation: List[float] = field(
+    orientation: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    angular_velocity: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    standard_deviation: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
 

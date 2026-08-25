@@ -27,11 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -100,24 +100,24 @@ class AidingSourceConfigPacket1:
     permanent: int = 0
     enabled: AidingSourceConfig1Enabled = field(default_factory=AidingSourceConfig1Enabled, repr=False)
     
-    internal_gnss_pvt_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    internal_gnss_orientation_rPSb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_gnss_pvt_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_gnss_orientation_rPSb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_position_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_odometer_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_heading_eulerbs: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_pressure_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_velocity_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_position_velocity_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_body_velocity_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_body_velocity_eulerbs: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_air_data_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_air_data_eulerbs: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_magnetometers_eulerbs: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_lvs_rSBb: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    external_lvs_eulerbs: List[float] = field(default_factory=lambda: [0.0]*3, repr=False)
-    reserved: List[float] = field(default_factory=lambda: [0.0]*9, repr=False)
+    internal_gnss_pvt_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    internal_gnss_orientation_rPSb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_gnss_pvt_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_gnss_orientation_rPSb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_position_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_odometer_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_heading_eulerbs: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_pressure_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_velocity_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_position_velocity_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_body_velocity_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_body_velocity_eulerbs: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_air_data_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_air_data_eulerbs: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_magnetometers_eulerbs: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_lvs_rSBb: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    external_lvs_eulerbs: list[float] = field(default_factory=lambda: [0.0]*3, repr=False)
+    reserved: list[float] = field(default_factory=lambda: [0.0]*9, repr=False)
 
     ID = PacketID.aiding_source_config_1
     LENGTH = 243

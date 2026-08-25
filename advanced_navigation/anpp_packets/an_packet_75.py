@@ -27,11 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -54,7 +54,7 @@ class ExternalMagnetometersPacket:
     """Packet 75 - External Magnetometers Packet"""
 
     delay: float = 0
-    magnetometer: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    magnetometer: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
     flags: ExternalMagnetometersFlags = field(
         default_factory=ExternalMagnetometersFlags, repr=False
     )

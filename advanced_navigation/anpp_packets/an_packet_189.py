@@ -27,11 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -39,8 +39,8 @@ class MagneticCalibrationValuesPacket:
     """Packet 189 - Magnetic Calibration Values Packet"""
 
     permanent: int = 0
-    hard_iron: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    soft_iron: List[List[float]] = field(default_factory=lambda: [[0.0] * 3] * 3)
+    hard_iron: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    soft_iron: list[list[float]] = field(default_factory=lambda: [[0.0] * 3] * 3)
 
     ID = PacketID.magnetic_calibration_values
     LENGTH = 49

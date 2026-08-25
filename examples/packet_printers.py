@@ -27,16 +27,20 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-import json
-from dataclasses import asdict
-from advanced_navigation.anpp_packets.an_packet_protocol import ANPacket
-from advanced_navigation.anpp_packets.an_packets import PacketID
-from advanced_navigation.anpp_packets.an_packet_3 import DeviceID
-from advanced_navigation.anpp_packets.an_packet_23 import StatusPacket, StatusPacketAdu2
-from advanced_navigation.anpp_packets.an_packet_28 import RawSensorsPacket, RawSensorsPacketAdu
-from advanced_navigation.anpp_packets import __all__ as anpp_all
 import importlib
 import inspect
+import json
+from dataclasses import asdict
+
+from advanced_navigation.anpp_packets import __all__ as anpp_all
+from advanced_navigation.anpp_packets.an_packet_3 import DeviceID
+from advanced_navigation.anpp_packets.an_packet_23 import StatusPacket, StatusPacketAdu2
+from advanced_navigation.anpp_packets.an_packet_28 import (
+    RawSensorsPacket,
+    RawSensorsPacketAdu,
+)
+from advanced_navigation.anpp_packets.an_packet_protocol import ANPacket
+from advanced_navigation.anpp_packets.an_packets import PacketID
 
 
 def get_device_specific_packet_obj(an_packet_id: int, device_id: DeviceID):
@@ -71,7 +75,7 @@ def print_packet(packet):
         name = packet.__class__.__name__
         # default=str handles Enums, bytes, and other non-serializable objects
         print(f"[{name}] {json.dumps(asdict(packet), default=str)}")
-    except Exception:
+    except (TypeError, ValueError, AttributeError):
         print(f"Received Packet ID {packet.ID.value} (Length: {packet.LENGTH})")
 
 def handle_raw_an_packet(an_packet: ANPacket, device_id: DeviceID):
@@ -115,8 +119,7 @@ def get_obj_from_enum(packet_enum):
                         continue
                     _packet_classes_cache[obj.ID.value] = obj
 
-        import advanced_navigation.anpp_packets.an_packet_0 as an_packet_0
-        import advanced_navigation.anpp_packets.an_packet_7 as an_packet_7
+        from advanced_navigation.anpp_packets import an_packet_0, an_packet_7
         _packet_classes_cache[0] = an_packet_0.AcknowledgePacket
         _packet_classes_cache[7] = an_packet_7.FileTransferFirstPacket
 

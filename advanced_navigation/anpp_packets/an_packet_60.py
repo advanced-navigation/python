@@ -27,13 +27,13 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
+import struct
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List
-import struct
-from .an_packets import PacketID
-from .an_packet_protocol import ANPacket
+
 from .an_packet_31 import SatelliteSystem
+from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -162,7 +162,7 @@ class SatelliteData:
     elevation: int = 0
     azimuth: int = 0
     number_of_frequencies: int = 0
-    frequency_information: List[FrequencyInformation] = field(
+    frequency_information: list[FrequencyInformation] = field(
         default_factory=list, repr=False
     )
 
@@ -203,7 +203,7 @@ class RawSatelliteDataPacket:
     packet_number: int = 0
     total_packets: int = 0
     number_of_satellites: int = 0
-    satellite_data: List[SatelliteData] = field(default_factory=list, repr=False)
+    satellite_data: list[SatelliteData] = field(default_factory=list, repr=False)
 
     ID = PacketID.raw_satellite_data
 

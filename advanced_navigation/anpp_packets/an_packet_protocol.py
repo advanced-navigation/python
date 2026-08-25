@@ -26,11 +26,12 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER          #
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
-from dataclasses import dataclass, field
-from typing import Final
-from array import array
-from struct import pack
 import struct
+from array import array
+from dataclasses import dataclass, field
+from struct import pack
+from typing import Final
+
 from fastcrc import crc16
 
 from .an_packets import PacketID

@@ -27,11 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -39,16 +39,16 @@ class ReferencePointOffsetsPacket:
     """Packet 194 - Reference Point Offsets Packet"""
 
     permanent: int = 0
-    primary_reference_point_offset: List[float] = field(
+    primary_reference_point_offset: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
-    heave_point_2_offset: List[float] = field(
+    heave_point_2_offset: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
-    heave_point_3_offset: List[float] = field(
+    heave_point_3_offset: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
-    heave_point_4_offset: List[float] = field(
+    heave_point_4_offset: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
 

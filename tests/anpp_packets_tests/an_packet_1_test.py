@@ -27,8 +27,9 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from advanced_navigation.anpp_packets.an_packets import PacketID
 from advanced_navigation.anpp_packets.an_packet_1 import RequestPacket
+from advanced_navigation.anpp_packets.an_packets import PacketID
+
 
 def test_request_packet_encode_single_id():
     check = RequestPacket(PacketID(2)).encode()

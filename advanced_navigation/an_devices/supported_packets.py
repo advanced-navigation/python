@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from typing import List
+
 from ..anpp_packets.an_packet_3 import DeviceID as DID
 from ..anpp_packets.an_packets import PacketID as PID
 from .device_capabilities import (
@@ -59,10 +59,11 @@ from .device_capabilities import (
     is_air_data_unit,
     is_boreas,
     is_ins,
-    is_orientus
+    is_orientus,
 )
 
-def get_supported_packets(device_id: DID) -> List[PID]:
+
+def get_supported_packets(device_id: DID) -> list[PID]:
     """Get the list of packets supported by the device"""
 
     # Base packets
@@ -290,4 +291,4 @@ def get_supported_packets(device_id: DID) -> List[PID]:
         })
 
 
-    return sorted(list(packets))
+    return sorted(packets)

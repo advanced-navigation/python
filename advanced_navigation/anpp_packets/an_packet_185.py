@@ -27,11 +27,11 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
+from dataclasses import dataclass, field
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -39,14 +39,14 @@ class InstallationAlignmentPacket:
     """Packet 185 - Installation Alignment Packet"""
 
     permanent: int = 0
-    alignment_dcm: List[List[float]] = field(
+    alignment_dcm: list[list[float]] = field(
         default_factory=lambda: [[0.0] * 3] * 3, repr=False
     )
-    gnss_antenna_offset: List[float] = field(
+    gnss_antenna_offset: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
-    odometer_offset: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    external_data_offset: List[float] = field(
+    odometer_offset: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    external_data_offset: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False
     )
 

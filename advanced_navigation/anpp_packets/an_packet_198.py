@@ -28,8 +28,9 @@
 ################################################################################
 
 from dataclasses import dataclass, field
-from .an_packets import PacketID
+
 from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()

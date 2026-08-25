@@ -27,20 +27,21 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from typing import List
+
 from ..anpp_packets.an_packet_3 import DeviceID
 from ..anpp_packets.an_packet_188 import FunctionId, GPIOFunction, GPIOIndex
 from .device_capabilities import (
+    has_internal_gnss,
+    has_magnetometer,
+    has_pressure,
     is_boreas,
     is_certus_mini,
     is_ins,
     is_orientus,
-    has_internal_gnss,
-    has_magnetometer,
-    has_pressure
 )
 
-def get_gpio_functions(device_id: DeviceID, gpio_index: GPIOIndex | None = None) -> List[GPIOFunction]:
+
+def get_gpio_functions(device_id: DeviceID, gpio_index: GPIOIndex | None = None) -> list[GPIOFunction]:
     """Get a list of GPIO functions supported by the device"""
 
     function_ids = [

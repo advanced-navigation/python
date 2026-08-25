@@ -1,5 +1,4 @@
-__all__ = ['an_packet_protocol',
-           'an_packets',
+__all__ = [
            'an_packet_0',
            'an_packet_1',
            'an_packet_2',
@@ -95,4 +94,7 @@ __all__ = ['an_packet_protocol',
            'an_packet_206',
            'an_packet_207',
            'an_packet_208',
-           'an_packet_209']
+           'an_packet_209',
+           'an_packet_protocol',
+           'an_packets',
+]

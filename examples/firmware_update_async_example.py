@@ -32,13 +32,26 @@ This example shows how to update the firmware on a Advanced Navigation device
 over serial using Python Asynchronous I/O (asyncio) Library
 """
 
-import asyncio
 import argparse
+import asyncio
 import logging
+import sys
 
 from advanced_navigation.an_devices.an_device_async import AnDevice
-from advanced_navigation.anpp_packets.an_packet_3 import DeviceInformationPacket
 from advanced_navigation.anpp_packets.an_packet_2 import BootMode
+from advanced_navigation.anpp_packets.an_packet_3 import DeviceInformationPacket
+
+
+async def on_progress(bytes_sent: int, total_bytes: int):
+    percent = 100.0 * bytes_sent / total_bytes if total_bytes else 100.0
+    sys.stdout.write(
+        f"\rFirmware update: {percent:6.2f}% ({bytes_sent} / {total_bytes} bytes)"
+    )
+    sys.stdout.flush()
+    if bytes_sent >= total_bytes:
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+
 
 async def main():
     parser = argparse.ArgumentParser(description="Air Data Unit V2 Example")
@@ -55,17 +68,12 @@ async def main():
         await device.wait_online()
         device_information = await device.request(DeviceInformationPacket)
         if device_information is not None:
-            print("Connected to {} SN {:08x}{:08x}{:08x} SW {} HW {}".format(device_information.device_id,
-                                                                            device_information.serial_number[0],  
-                                                                            device_information.serial_number[1], 
-                                                                            device_information.serial_number[2],
-                                                                            device_information.software_version/1000,
-                                                                            device_information.hardware_revision/1000))
+            print(f"Connected to {device_information.device_id} SN {device_information.serial_number[0]:08x}{device_information.serial_number[1]:08x}{device_information.serial_number[2]:08x} SW {device_information.software_version/1000} HW {device_information.hardware_revision/1000}")
 
         # Switch the device into bootloader mode, which is required before writing firmware
         await device.request_boot_mode(BootMode.bootloader)
         # Stream the .anfw firmware update file to the device
-        await device.write_firmware(args.file_path)
+        await device.write_firmware(args.file_path, on_progress=on_progress)
         # Wait for the device to reboot and come back online after the update finishes
         await device.wait_online()
 

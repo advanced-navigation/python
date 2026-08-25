@@ -27,12 +27,12 @@
 # DEALINGS IN THE SOFTWARE.                                                    #
 ################################################################################
 
-from dataclasses import dataclass, field
 import struct
-from typing import List
-from .an_packets import PacketID
-from .an_packet_protocol import ANPacket
+from dataclasses import dataclass, field
+
 from .an_packet_31 import SatelliteSystem
+from .an_packet_protocol import ANPacket
+from .an_packets import PacketID
 
 
 @dataclass()
@@ -150,9 +150,9 @@ class RawSatelliteGLONASSEphemerisPacket:
     satellite_number: int = 0
     clock_bias: float = 0
     frequency_bias: float = 0
-    position: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    velocity: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    acceleration: List[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    position: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    velocity: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
+    acceleration: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
     frame_start_time: int = 0
     age: int = 0
     frequency_slot: int = 0
@@ -199,9 +199,9 @@ class RawSatelliteGPSIonoEphemerisPacket:
     unix_time: int = 0
     satellite_system: SatelliteSystem = SatelliteSystem.unknown
     satellite_number: int = 0
-    alpha: List[float] = field(default_factory=lambda: [0, 0, 0, 0], repr=False)
-    beta: List[float] = field(default_factory=lambda: [0, 0, 0, 0], repr=False)
-    asub: List[float] = field(default_factory=lambda: [0, 0], repr=False)
+    alpha: list[float] = field(default_factory=lambda: [0, 0, 0, 0], repr=False)
+    beta: list[float] = field(default_factory=lambda: [0, 0, 0, 0], repr=False)
+    asub: list[float] = field(default_factory=lambda: [0, 0], repr=False)
     delta_ls: int = 0
     delta_tlsf: int = 0
     wnsub_lsf: int = 0
