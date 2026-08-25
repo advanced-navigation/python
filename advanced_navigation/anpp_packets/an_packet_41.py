@@ -38,7 +38,9 @@ from .an_packets import PacketID
 class DCMOrientationPacket:
     """Packet 41 - DCM Orientation Packet"""
 
-    orientation: list[list[float]] = field(default_factory=lambda: [[0.0] * 3] * 3)
+    orientation: list[list[float]] = field(
+        default_factory=lambda: [[0.0] * 3 for _ in range(3)]
+    )
 
     ID = PacketID.dcm_orientation
     LENGTH = 36

@@ -31,10 +31,21 @@ import struct
 
 import pytest
 
-from advanced_navigation.anpp_packets.an_packet_31 import DetailedSatellitesPacket
+from advanced_navigation.anpp_packets.an_packet_31 import (
+    DetailedSatellitesPacket,
+    SatelliteFrequencies,
+)
+from advanced_navigation.anpp_packets.an_packet_41 import DCMOrientationPacket
 from advanced_navigation.anpp_packets.an_packet_60 import RawSatelliteDataPacket
-from advanced_navigation.anpp_packets.an_packet_84 import ExtendedSatellitesPacket
+from advanced_navigation.anpp_packets.an_packet_84 import (
+    ExtendedSatelliteFlags,
+    ExtendedSatellitesPacket,
+)
 from advanced_navigation.anpp_packets.an_packet_181 import PacketsPeriodPacket
+from advanced_navigation.anpp_packets.an_packet_185 import InstallationAlignmentPacket
+from advanced_navigation.anpp_packets.an_packet_189 import (
+    MagneticCalibrationValuesPacket,
+)
 from advanced_navigation.anpp_packets.an_packet_202 import (
     IPDataportConfigurationPacket,
 )
@@ -44,7 +55,7 @@ DETAILED_SATELLITE = struct.Struct("<BBBBHB")
 FREQUENCY_INFORMATION = struct.Struct("<BBddff")
 SATELLITE_DATA = struct.Struct("<BBBHB")
 RAW_SATELLITE_DATA_HEADER = struct.Struct("<IIiBBBB")
-EXTENDED_SATELLITE = struct.Struct("<BBbBHBBB")
+EXTENDED_SATELLITE = struct.Struct("<BBBBHBBB")
 PACKET_PERIOD = struct.Struct("<BI")
 IP_DATAPORT_CONFIGURATION = struct.Struct("<IHB")
 
@@ -103,6 +114,40 @@ def test_decodes_distinct_repeated_records(
 
     records = getattr(packet, records_attribute)
     assert [getattr(record, value_attribute) for record in records] == expected
+
+
+def test_packet_84_decodes_nested_frequency_and_flag_fields():
+    data = bytes([1, 0]) + EXTENDED_SATELLITE.pack(1, 11, 0b10000001, 10, 100, 31, 32, 0b0101)
+    packet = ExtendedSatellitesPacket()
+
+    assert packet.decode(make_packet(packet.ID, data)) == 0
+
+    satellite = packet.extended_satellites[0]
+    assert isinstance(satellite.frequencies, SatelliteFrequencies)
+    assert satellite.frequencies.l1_ca is True
+    assert satellite.frequencies.l1_c is False
+    assert satellite.frequencies.l5 is True
+    assert isinstance(satellite.flags, ExtendedSatelliteFlags)
+    assert satellite.flags.visible_by_receiver_1 is True
+    assert satellite.flags.visible_by_receiver_2 is False
+    assert satellite.flags.used_in_primary_position_solution is True
+    assert satellite.flags.used_in_moving_baseline_solution is False
+
+
+@pytest.mark.parametrize(
+    ("packet_type", "matrix_attribute"),
+    [
+        (DCMOrientationPacket, "orientation"),
+        (InstallationAlignmentPacket, "alignment_dcm"),
+        (MagneticCalibrationValuesPacket, "soft_iron"),
+    ],
+    ids=["packet-41", "packet-185", "packet-189"],
+)
+def test_matrix_default_factory_uses_independent_rows(packet_type, matrix_attribute):
+    matrix = getattr(packet_type(), matrix_attribute)
+    matrix[0][0] = 1.0
+    assert matrix[1][0] == 0.0
+    assert matrix[2][0] == 0.0
 
 
 def pack_frequency(frequency):

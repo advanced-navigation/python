@@ -44,6 +44,12 @@ class ExtendedSatelliteFlags:
     used_in_primary_position_solution: bool = False
     used_in_moving_baseline_solution: bool = False
 
+    def unpack(self, data):
+        self.visible_by_receiver_1 = (data & (1 << 0)) != 0
+        self.visible_by_receiver_2 = (data & (1 << 1)) != 0
+        self.used_in_primary_position_solution = (data & (1 << 2)) != 0
+        self.used_in_moving_baseline_solution = (data & (1 << 3)) != 0
+
 
 @dataclass()
 class ExtendedSatellite:
@@ -64,20 +70,23 @@ class ExtendedSatellite:
 
     LENGTH = 9
 
-    _structure = struct.Struct("<BBbBHBBB")
+    _structure = struct.Struct("<BBBBHBBB")
 
     def unpack(self, data):
         """Unpack data bytes"""
         (
             self.satellite_system,
             self.number,
-            self.frequencies,
+            frequency_value,
             self.elevation,
             self.azimuth,
             self.snr1,
             self.snr2,
-            self.flags,
+            flags_value,
         ) = self._structure.unpack_from(data)
+
+        self.frequencies.unpack(frequency_value)
+        self.flags.unpack(flags_value)
 
 
 @dataclass()

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "advanced_navigation"
-version = "0.2.1"
+version = "0.2.2"
 description = "Advanced Navigation Python SDK"
 authors = [{ name = "Advanced Navigation", email = "ins-embedded-team@advancednavigation.com" }]
 keywords = ["advanced-navigation", "ins", "sdk"]

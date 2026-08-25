@@ -14,10 +14,10 @@ This SDK provides a comprehensive suite of tools for interfacing with Advanced N
 
 ## Installation
 
-The SDK is available on PyPI and can be installed via pip:
+The SDK is available on [PyPI](https://pypi.org/project/advanced-navigation/) and can be installed via pip:
 
 ```bash
-pip install advanced_navigation
+pip install advanced-navigation
 ```
 
 *(Note: Requires Python 3.10+)*

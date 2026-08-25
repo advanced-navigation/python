@@ -40,7 +40,7 @@ class InstallationAlignmentPacket:
 
     permanent: int = 0
     alignment_dcm: list[list[float]] = field(
-        default_factory=lambda: [[0.0] * 3] * 3, repr=False
+        default_factory=lambda: [[0.0] * 3 for _ in range(3)], repr=False
     )
     gnss_antenna_offset: list[float] = field(
         default_factory=lambda: [0, 0, 0], repr=False

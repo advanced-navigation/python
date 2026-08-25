@@ -40,7 +40,9 @@ class MagneticCalibrationValuesPacket:
 
     permanent: int = 0
     hard_iron: list[float] = field(default_factory=lambda: [0, 0, 0], repr=False)
-    soft_iron: list[list[float]] = field(default_factory=lambda: [[0.0] * 3] * 3)
+    soft_iron: list[list[float]] = field(
+        default_factory=lambda: [[0.0] * 3 for _ in range(3)]
+    )
 
     ID = PacketID.magnetic_calibration_values
     LENGTH = 49
