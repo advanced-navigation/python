@@ -61,13 +61,13 @@ class NorthSeekingInitialisationStatusFlags:
     def pack(self):
         return (
             (self.north_seeking_initialised << 0)
-            & (self.position_not_ready << 1)
-            & (self.excessive_roll << 2)
-            & (self.excessive_pitch << 3)
-            & (self.excessive_movement << 4)
-            & (self.latitude_change << 5)
-            & (self.lever_arm_offset_change << 6)
-            & (self.latitude_check_failed << 7)
+            | (self.position_not_ready << 1)
+            | (self.excessive_roll << 2)
+            | (self.excessive_pitch << 3)
+            | (self.excessive_movement << 4)
+            | (self.latitude_change << 5)
+            | (self.lever_arm_offset_change << 6)
+            | (self.latitude_check_failed << 7)
         )
 
 
