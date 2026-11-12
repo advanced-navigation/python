@@ -61,8 +61,8 @@ class DHCPMode:
     def pack(self):
         return (
             (self.dhcp_enabled << 0)
-            & (self.automatic_dns << 1)
-            & (self.link_mode.value << 2)
+            | (self.automatic_dns << 1)
+            | (self.link_mode.value << 2)
         )
 
 

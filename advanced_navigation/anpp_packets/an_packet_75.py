@@ -46,7 +46,7 @@ class ExternalMagnetometersFlags:
         self.overrange = (data & (1 << 1)) != 0
 
     def pack(self):
-        return (self.failure << 0) & (self.overrange << 1)
+        return (self.failure << 0) | (self.overrange << 1)
 
 
 @dataclass()
