@@ -39,17 +39,22 @@ class GimbalStatePacket:
     """Packet 72 - Gimbal State Packet"""
 
     current_angle: float = 0
+    """Azimuth angle (rad)"""
+    elevation: float = 0
+    """Elevation angle (rad)"""
 
     ID = PacketID.gimbal_state
     LENGTH = 8
 
-    _structure = struct.Struct("<f4x")
+    _structure = struct.Struct("<ff")
 
     def decode(self, an_packet: ANPacket) -> int:
         """Decode ANPacket to Gimbal State Packet
         Returns 0 on success and 1 on failure"""
         if (an_packet.id == self.ID) and (len(an_packet.data) == self.LENGTH):
-            self.current_angle = self._structure.unpack_from(an_packet.data)[0]
+            self.current_angle, self.elevation = self._structure.unpack_from(
+                an_packet.data
+            )
             return 0
         else:
             return 1
@@ -57,7 +62,7 @@ class GimbalStatePacket:
     def encode(self) -> ANPacket:
         """Encode Gimbal State Packet to ANPacket
         Returns the ANPacket"""
-        data = self._structure.pack(self.current_angle)
+        data = self._structure.pack(self.current_angle, self.elevation)
 
         an_packet = ANPacket()
         an_packet.encode(self.ID, self.LENGTH, data)

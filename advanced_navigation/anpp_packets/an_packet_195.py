@@ -121,31 +121,31 @@ class GPIOPort:
         self.simrad_rate = GPIORate(values[11])
         self.gprot_rate = GPIORate(values[12])
         self.gphev_rate = GPIORate(values[13])
-        self.gpgsv_rate = GPIORate(values[11])
+        self.gpgsv_rate = GPIORate(values[14])
         self.pfecatt_rate = GPIORate(values[15])
         self.pfechve_rate = GPIORate(values[16])
         self.gpgst_rate = GPIORate(values[17])
 
     def pack(self) -> bytes:
         data = self._structure.pack(
-            self.port_input_mode,
-            self.port_output_mode,
-            self.nmea_fix_behaviour,
-            self.gpzda_rate,
-            self.gpgga_rate,
-            self.gpvtg_rate,
-            self.gprmc_rate,
-            self.gphdt_rate,
-            self.gpgll_rate,
-            self.pashr_rate,
-            self.tss1_rate,
-            self.simrad_rate,
-            self.gprot_rate,
-            self.gphev_rate,
-            self.gpgsv_rate,
-            self.pfecatt_rate,
-            self.pfechve_rate,
-            self.gpgst_rate,
+            self.port_input_mode.value,
+            self.port_output_mode.value,
+            self.nmea_fix_behaviour.value,
+            self.gpzda_rate.value,
+            self.gpgga_rate.value,
+            self.gpvtg_rate.value,
+            self.gprmc_rate.value,
+            self.gphdt_rate.value,
+            self.gpgll_rate.value,
+            self.pashr_rate.value,
+            self.tss1_rate.value,
+            self.simrad_rate.value,
+            self.gprot_rate.value,
+            self.gphev_rate.value,
+            self.gpgsv_rate.value,
+            self.pfecatt_rate.value,
+            self.pfechve_rate.value,
+            self.gpgst_rate.value,
         )
         return data
 
@@ -234,8 +234,8 @@ class GPIOOutputConfigurationPacket:
 
         if self.logging is not None and self.data_ports is not None:
             data = pack("<B", self.permanent)
-            data += self.gpio_1.pack()
             data += self.gpio_3.pack()
+            data += self.gpio_1.pack()
             data += self.logging.pack()
             for port in self.data_ports:
                 data += port.pack()
