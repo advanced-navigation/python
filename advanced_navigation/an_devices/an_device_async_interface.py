@@ -276,7 +276,7 @@ class AnDeviceInterface:
         try:
             self.send_request_packet(packet_type.ID)
             return await asyncio.wait_for(future, timeout)
-        except TimeoutError:
+        except asyncio.TimeoutError:
             return None
         finally:
             if packet_type.ID in self._callbacks:
@@ -326,7 +326,7 @@ class AnDeviceInterface:
             if expected_response is not None:
                 return await asyncio.wait_for(future, timeout)
             return None
-        except (TimeoutError, OSError) as ex:
+        except (asyncio.TimeoutError, OSError) as ex:
             logger.warning("Failed to send packet: %s", ex)
             return None
         finally:

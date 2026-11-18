@@ -52,17 +52,20 @@ class DHCPMode:
     dhcp_enabled: bool = False
     automatic_dns: bool = False
     link_mode: LinkMode = LinkMode.auto
+    ethernet_disabled: bool = False
 
     def unpack(self, data):
         self.dhcp_enabled = (data & 0x1) != 0
         self.automatic_dns = (data & 0x2) != 0
         self.link_mode = LinkMode((data & 0x1C) >> 2)
+        self.ethernet_disabled = (data & (1 << 5)) != 0
 
     def pack(self):
         return (
             (self.dhcp_enabled << 0)
             | (self.automatic_dns << 1)
             | (self.link_mode.value << 2)
+            | (self.ethernet_disabled << 5)
         )
 
 
